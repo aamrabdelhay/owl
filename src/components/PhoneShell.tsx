@@ -186,7 +186,10 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             className="sideBtn right"
             style={{ top: '30%', height: '6%' }}
             aria-label="Power / End"
-            onClick={() => onPowerDown()}
+            onPointerDown={onPowerDown}
+            onPointerUp={onPowerUp}
+            onPointerLeave={() => window.clearTimeout(powerTimer.current)}
+            onContextMenu={(e) => e.preventDefault()}
           />
           <button
             type="button"
