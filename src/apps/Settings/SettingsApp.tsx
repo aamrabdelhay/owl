@@ -673,15 +673,14 @@ function About() {
         <b>Privacy:</b> Your files, photos, notes, contacts, messages and passwords stay in this
         browser on this device; OWL does not upload them to its own server. API keys are stored locally.
         When you use Gemini, the message or call text you submit is sent directly to Google. YouTube
-        search terms are sent directly to YouTube. Opened websites also connect to their own services.
+        search queries are sent to community-operated public Invidious search instances, while videos use YouTube's public embedded player. Opened websites also connect to their own services.
         There is no OWL tracking, analytics or advertising cookie.
         <hr className="sep" />
-        <b>Credits:</b> React, Vite, Zustand, idb-keyval, jsmediatags. Icons and device artwork are
-        original. All sounds are synthesised with the Web Audio API.
+        <b>Credits:</b> React, Vite, Zustand, idb-keyval, jsmediatags and chess.mjs. The scrollable application-list and soft-key approach takes inspiration from the open-source S60Launcher project; OWL's code and device artwork remain original. All sounds are synthesised with the Web Audio API.
         <hr className="sep" />
-        Device design inspired by classic QWERTY phones of 2010 — no third-party trademarks used.
+        Device layout inspired by classic Symbian S60 and QWERTY phones — no third-party trademarks used.
       </div>
-      <div className="kv"><b>Screen</b><span>480 × 360</span></div>
+      <div className="kv"><b>Screen</b><span>Adaptive full-width display</span></div>
       <div className="kv"><b>Version</b><span>1.0.0</span></div>
       <div className="kv"><b>Storage</b><span>IndexedDB + localStorage</span></div>
       <div className="kv"><b>Source</b><span>github.com/aamrabdelhay/owl</span></div>
