@@ -64,8 +64,8 @@ const LABELS: Record<string, string> = {
 function Root({ onOpen }: { onOpen: (s: Section) => void }) {
   const s = useStore((state) => state.settings);
   const rows: { id: Section; label: string; meta: string; icon: string }[] = [
-    { id: 'keyboard', label: 'Keyboard mode', meta: s.keyboardMode === 'simple' ? 'Classic 12-key' : 'BlackBerry QWERTY', icon: 'key' },
-    { id: 'ai', label: 'AI & online services', meta: s.geminiApiKey ? 'Gemini configured' : 'Set up Gemini / YouTube', icon: 'wand' },
+    { id: 'keyboard', label: 'Keyboard mode', meta: s.keyboardMode === 'simple' ? 'Classic 9-key' : 'BlackBerry QWERTY', icon: 'key' },
+    { id: 'ai', label: 'AI & online services', meta: s.geminiApiKey ? 'Gemini configured' : 'Set up Gemini AI', icon: 'wand' },
     { id: 'display', label: 'Display', meta: `Brightness ${Math.round(s.brightness * 100)}%`, icon: 'sun' },
     { id: 'sound', label: 'Sound', meta: `${profileLabel(s.profile, s.language)}`, icon: 'volume' },
     { id: 'wallpaper', label: 'Wallpaper', meta: s.wallpaperId.startsWith('custom:') ? 'Custom image' : 'Built-in', icon: 'image' },
@@ -724,7 +724,7 @@ function KeyboardSettings() {
       <button className={`rowBtn ${mode === 'simple' ? 'active' : ''}`} onClick={() => set('keyboardMode', 'simple')}>
         <Icon name="phone" size={16} />
         <span style={{ flex: 1 }}>Classic phone keypad</span>
-        <span className="meta">{mode === 'simple' ? 'Selected' : '12-key'}</span>
+        <span className="meta">{mode === 'simple' ? 'Selected' : '9-key'}</span>
       </button>
       <button className={`rowBtn ${mode === 'blackberry' ? 'active' : ''}`} onClick={() => set('keyboardMode', 'blackberry')}>
         <Icon name="keyboard" size={16} />
