@@ -97,6 +97,10 @@ export function loadSettingsSync(): Settings {
 }
 
 let saveTimer: number | undefined;
+function persistGeminiKey(key: string) {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem('owl:geminiApiKey:v1', key || ''); } catch { /* storage is restricted */ }
+}
 function persistSettings(settings: Settings) {
   if (typeof window === 'undefined') return;
   if (saveTimer) window.clearTimeout(saveTimer);
@@ -287,12 +291,14 @@ export const useStore = create<OwlStore>((set, get) => ({
   updateSettings: (patch) =>
     set((s) => {
       const settings = deepMergeSettings(s.settings, patch);
+      if (Object.prototype.hasOwnProperty.call(patch, 'geminiApiKey')) persistGeminiKey(settings.geminiApiKey);
       persistSettings(settings);
       return { settings };
     }),
   setSetting: (key, value) =>
     set((s) => {
       const settings = { ...s.settings, [key]: value };
+      if (key === 'geminiApiKey') persistGeminiKey(String(value || ''));
       persistSettings(settings);
       return { settings };
     }),
