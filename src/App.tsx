@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStore, profileVolume } from './os/store';
 import { StatusBar, DialogLayer, ToastStack, SoftMenuLayer } from './components/Shell';
 import { PhoneShell } from './components/PhoneShell';
@@ -12,10 +12,7 @@ import { RecentApps } from './os/screens/RecentApps';
 import { dispatchKey, onKeyUp } from './os/kernel';
 import { describeKey } from './os/keys';
 import { keyClick, messageTone, unlockAudio, vibrate } from './os/audio';
-import { OwlLogo } from './components/OwlLogo';
 import { Icon } from './components/Icon';
-import { SHORTCUT_LEGEND } from './os/keys';
-import { openSetupIfNeeded } from './os/onboarding';
 import { useEffects } from './os/effects';
 import type { KeyEventLike } from './os/kernelTypes';
 
@@ -33,6 +30,7 @@ export default function App() {
   const wallpaperVersion = useStore((s) => s.wallpaperVersion);
   const clipRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [screenWidth, setScreenWidth] = useState(SCREEN_W);
   const [shutdown, setShutdown] = useState(false);
   const lastAlive = useRef(Date.now());
 
@@ -50,34 +48,34 @@ export default function App() {
     document.title = 'OWL — Retro QWERTY Phone Simulator';
   }, [settings.theme, themePreview, settings.highContrast, settings.fontScale, settings.language]);
 
-  /* responsive screen scaling: measure the real clip box */
-  useEffect(() => {
+  /* responsive screen scaling: measure before the first visible paint */
+  useLayoutEffect(() => {
     const measure = () => {
       const el = clipRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      if (!rect.width) return;
-      const s = Math.min(rect.width / SCREEN_W, rect.height / SCREEN_H);
+      if (!rect.width || !rect.height) return;
+      // Keep the 360px logical height, but expand the logical width to the
+      // entire upper half of the viewport so the phone display uses 100% width.
+      const s = rect.height / SCREEN_H;
       setScale(s);
+      setScreenWidth(rect.width / s);
     };
     measure();
-    const ro = new ResizeObserver(measure);
-    if (clipRef.current) ro.observe(clipRef.current);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (clipRef.current) ro?.observe(clipRef.current);
+    const viewport = window.visualViewport;
     window.addEventListener('resize', measure);
     window.addEventListener('orientationchange', measure);
+    viewport?.addEventListener('resize', measure);
     const t = window.setTimeout(measure, 60);
     return () => {
-      ro.disconnect();
+      ro?.disconnect();
+      viewport?.removeEventListener('resize', measure);
       window.removeEventListener('resize', measure);
       window.removeEventListener('orientationchange', measure);
       window.clearTimeout(t);
     };
-  }, []);
-
-  /* first-run wizard */
-  useEffect(() => {
-    const t = window.setTimeout(() => openSetupIfNeeded(), 2800);
-    return () => window.clearTimeout(t);
   }, []);
 
   /* shutdown animation */
@@ -241,8 +239,7 @@ export default function App() {
 
   return (
     <div className="desk" dir={settings.language === 'ar' ? 'rtl' : 'ltr'}>
-      <DeskPanel />
-      <PhoneShell onKey={handleKey} screenRef={clipRef} scale={scale}>
+      <PhoneShell onKey={handleKey} screenRef={clipRef} scale={scale} screenWidth={screenWidth}>
         <div
           className="screenRoot"
           dir={settings.language === 'ar' ? 'rtl' : 'ltr'}
@@ -256,42 +253,6 @@ export default function App() {
           {screenContent}
         </div>
       </PhoneShell>
-    </div>
-  );
-}
-
-/* ------------------------------- desk panel ------------------------------- */
-
-function DeskPanel() {
-  const settings = useStore((s) => s.settings);
-  return (
-    <div className="helper">
-      <OwlLogo size={44} glow />
-      <h1 style={{ marginTop: 8 }}>OWL</h1>
-      <div className="tag">
-        A retro QWERTY phone that actually works. Boot it, browse the web, take notes, play
-        nine games — everything runs in your browser and stays on your device.
-      </div>
-      <details>
-        <summary>Keyboard shortcuts</summary>
-        <table>
-          <tbody>
-            {SHORTCUT_LEGEND.map(([k, d]) => (
-              <tr key={k}><td><kbd>{k}</kbd></td><td>{d}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
-      <div style={{ marginTop: 6 }}>
-        <a href="https://github.com/aamrabdelhay/owl" target="_blank" rel="noreferrer noopener">
-          <Icon name="globe" size={12} /> View the source on GitHub
-        </a>
-      </div>
-      <div className="legal">
-        Original device design, original sounds (all synthesised), no tracking, no cookies.
-        Calls and messages are simulated. Your files never leave this device.
-        <br />Theme: {settings.theme} · Profile: {settings.profile}
-      </div>
     </div>
   );
 }
@@ -371,6 +332,14 @@ function IncomingCallOverlay() {
           >
             Answer
           </button>
+          {useStore.getState().settings.geminiApiKey && (
+            <button className="btn" onClick={() => {
+              setCall(null);
+              openApp('phone', { number: call.number, activeCall: true, aiStart: true });
+            }}>
+              AI answer
+            </button>
+          )}
         </div>
       </div>
     </div>

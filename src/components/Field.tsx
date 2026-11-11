@@ -125,9 +125,9 @@ export function Field({
       {active ? (
         <>
           <span className="fieldText">
-            {value.slice(0, caret)}
+            {kind === 'password' ? '•'.repeat(caret) : value.slice(0, caret)}
             <span className="caret" />
-            {value.slice(caret)}
+            {kind === 'password' ? '•'.repeat(Math.max(0, value.length - caret)) : value.slice(caret)}
           </span>
           {!value && <span className="placeholderText" style={{ opacity: 0.5 }}>{placeholder}</span>}
         </>

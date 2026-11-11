@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../os/store';
 import { OwlLogo } from './OwlLogo';
 import { Keyboard } from './Keyboard';
+import { SimpleKeyboard } from './SimpleKeyboard';
 import { Icon } from './Icon';
 import { keyClick, navBlip, vibrate } from '../os/audio';
 import type { KeyEventLike } from '../os/kernelTypes';
@@ -11,13 +12,14 @@ interface PhoneShellProps {
   onKey: (e: KeyEventLike) => boolean;
   screenRef: React.RefObject<HTMLDivElement>;
   scale: number;
+  screenWidth: number;
 }
 
 /**
  * The device: bezel, screen, navigation row with optical trackpad, full
  * laptop-layout QWERTY and side keys. Pure HTML/CSS/SVG.
  */
-export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProps) {
+export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: PhoneShellProps) {
   const settings = useStore((s) => s.settings);
   const toggleCaps = useStore((s) => s.toggleCaps);
   const setShift = useStore((s) => s.setShift);
@@ -155,11 +157,7 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
       <div className="deskGlow" aria-hidden="true" />
       <div
         className="phoneTilt"
-        style={{
-          transform: settings.reduceMotion
-            ? 'none'
-            : `rotateY(${-4 + tilt.x}deg) rotateX(${1.2 - tilt.y}deg)`,
-        }}
+        style={{ transform: 'none' }}
       >
         <div className={`phone ${screen === 'boot' ? 'booting' : ''}`} data-trail={trail} role="application" aria-label="OWL phone simulator">
           {/* side keys */}
@@ -189,7 +187,10 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             className="sideBtn right"
             style={{ top: '30%', height: '6%' }}
             aria-label="Power / End"
-            onClick={() => onPowerDown()}
+            onPointerDown={onPowerDown}
+            onPointerUp={onPowerUp}
+            onPointerLeave={() => window.clearTimeout(powerTimer.current)}
+            onContextMenu={(e) => e.preventDefault()}
           />
           <button
             type="button"
@@ -199,6 +200,7 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             onClick={() => useStore.getState().setSetting('profile', useStore.getState().settings.profile === 'silent' ? 'normal' : 'silent')}
           />
 
+          <div className="phoneDisplayArea">
           {/* forehead */}
           <div className="topBezel">
             <div className="earpiece" aria-label="Earpiece speaker">
@@ -213,10 +215,10 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
 
           {/* screen */}
           <div className="screenBezel">
-            <div className="screenClip">
+            <div className="screenClip" ref={screenRef}>
               <div
                 className="screenScale"
-                style={{ transform: `scale(${scale})` }}
+                style={{ width: `${screenWidth}px`, transform: `translate(-50%, -50%) scale(${scale})` }}
               >
                 {children}
               </div>
@@ -224,6 +226,8 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             </div>
           </div>
 
+          </div>
+          <div className="phoneInputArea">
           {/* navigation row */}
           <div className="navRow">
             <button
@@ -293,7 +297,8 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
           </div>
 
           {/* keyboard */}
-          <Keyboard onKey={onKey} />
+          {settings.keyboardMode === 'simple' ? <SimpleKeyboard onKey={onKey} /> : <Keyboard onKey={onKey} />}
+          </div>
         </div>
       </div>
     </div>

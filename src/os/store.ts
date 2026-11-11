@@ -12,6 +12,11 @@ const SETTINGS_KEY = 'owl:settings:v1';
 export function defaultSettings(now = Date.now()): Settings {
   return {
     language: 'en',
+    keyboardMode: 'blackberry',
+    geminiApiKey: '',
+    youtubeApiKey: '',
+    aiAutoReply: false,
+    aiAutoAnswer: false,
     userName: '',
     theme: 'owl-night',
     highContrast: false,
@@ -56,7 +61,7 @@ export function defaultSettings(now = Date.now()): Settings {
     powerSaver: false,
     bluetooth: true,
     wifiOnly: false,
-    onboarded: false,
+    onboarded: true,
     homePage: 'owl://home',
     installedAt: now,
   };
@@ -71,7 +76,9 @@ export function loadSettingsSync(): Settings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return defaultSettings();
     const parsed = JSON.parse(raw) as Partial<Settings>;
-    return deepMergeSettings(defaultSettings(), parsed);
+    // The setup takeover is intentionally removed; restore the handset
+    // directly and keep home-screen hotkeys enabled for existing installs.
+    return deepMergeSettings(defaultSettings(), { ...parsed, onboarded: true });
   } catch {
     return defaultSettings();
   }
@@ -206,10 +213,10 @@ interface OwlStore {
 const initialSettings = typeof window !== 'undefined' ? loadSettingsSync() : defaultSettings();
 
 export const useStore = create<OwlStore>((set, get) => ({
-  booting: true,
-  bootProgress: 0,
+  booting: false,
+  bootProgress: 100,
   powered: true,
-  screen: 'boot',
+  screen: 'home',
   locked: false,
   failedAttempts: 0,
   cooldownUntil: 0,

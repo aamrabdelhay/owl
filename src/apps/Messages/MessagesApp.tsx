@@ -7,6 +7,7 @@ import { Icon } from '../../components/Icon';
 import { DB_KEYS } from '../../os/db';
 import type { SmsMessage, SmsThread, Contact } from '../../os/types';
 import { messageTone } from '../../os/audio';
+import { askGemini } from '../../os/ai';
 
 const SEED_THREADS: SmsThread[] = [
   { id: 'th-welcome', address: 'OWL', name: 'OWL Team', updatedAt: Date.now() - 60000 },
@@ -112,6 +113,29 @@ export default function MessagesApp({ threadId }: { threadId?: string }) {
           },
         ]);
       }, 2200);
+    }
+    // Optional local AI auto-reply. This is a simulated recipient, not a real SMS network.
+    if (settings.aiAutoReply && settings.geminiApiKey && address !== 'OWL') {
+      const context = messages
+        .filter((m) => m.threadId === id)
+        .sort((a, b) => a.at - b.at)
+        .slice(-8)
+        .map((m) => `${m.direction === 'out' ? 'You' : 'Recipient'}: ${m.body}`)
+        .join('\n');
+      void askGemini(
+        settings.geminiApiKey,
+        [{ role: 'user', text: `Continue this fictional SMS conversation as the recipient.\n\nRecent conversation:\n${context}\n\nNew message to answer:\n${body.trim()}` }],
+        'You are replying as the person receiving a simulated SMS on an old mobile phone. Keep replies natural, concise, and conversational. Never claim this is a real phone number or real carrier SMS.'
+      ).then((answer) => {
+        setMessages((prev) => [...prev, {
+          id: uid('msg'), threadId: id, address, body: answer, at: Date.now(),
+          direction: 'in', status: 'delivered', read: true,
+        }]);
+        setThreads((prev) => prev.map((t) => t.id === id ? { ...t, updatedAt: Date.now() } : t));
+        if (settings.profile !== 'silent') messageTone(settings.messageTone, 0.35);
+      }).catch((error) => {
+        toast(error instanceof Error ? error.message : 'AI SMS reply failed');
+      });
     }
   };
 

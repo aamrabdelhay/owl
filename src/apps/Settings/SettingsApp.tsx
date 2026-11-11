@@ -15,7 +15,7 @@ import { SHORTCUT_LEGEND } from '../../os/keys';
 
 type Section =
   | 'root' | 'display' | 'sound' | 'wallpaper' | 'themes' | 'home' | 'security' | 'datetime'
-  | 'language' | 'battery' | 'storage' | 'accessibility' | 'reset' | 'about' | 'help';
+  | 'language' | 'battery' | 'storage' | 'accessibility' | 'reset' | 'about' | 'help' | 'keyboard' | 'ai';
 
 export default function SettingsApp({ section }: { section?: string }) {
   const [stack, setStack] = useState<Section[]>([(section as Section) || 'root']);
@@ -39,6 +39,8 @@ export default function SettingsApp({ section }: { section?: string }) {
         {current === 'wallpaper' && <Wallpaper />}
         {current === 'themes' && <ThemeSection />}
         {current === 'home' && <HomeSection />}
+        {current === 'keyboard' && <KeyboardSettings />}
+        {current === 'ai' && <AISettings />}
         {current === 'security' && <Security />}
         {current === 'datetime' && <DateTime />}
         {current === 'language' && <Language />}
@@ -57,11 +59,14 @@ const LABELS: Record<string, string> = {
   display: 'Display', sound: 'Sound', wallpaper: 'Wallpaper', themes: 'Themes', home: 'Home screen',
   security: 'Security', datetime: 'Date & Time', language: 'Language', battery: 'Battery',
   storage: 'Storage', accessibility: 'Accessibility', reset: 'Reset OS', about: 'About', help: 'Quick help',
+  keyboard: 'Keyboard mode', ai: 'AI & online services',
 };
 
 function Root({ onOpen }: { onOpen: (s: Section) => void }) {
   const s = useStore((state) => state.settings);
   const rows: { id: Section; label: string; meta: string; icon: string }[] = [
+    { id: 'keyboard', label: 'Keyboard mode', meta: s.keyboardMode === 'simple' ? 'Classic 12-key' : 'BlackBerry QWERTY', icon: 'key' },
+    { id: 'ai', label: 'AI & online services', meta: s.geminiApiKey ? 'Gemini configured' : 'Set up Gemini / YouTube', icon: 'wand' },
     { id: 'display', label: 'Display', meta: `Brightness ${Math.round(s.brightness * 100)}%`, icon: 'sun' },
     { id: 'sound', label: 'Sound', meta: `${profileLabel(s.profile, s.language)}`, icon: 'volume' },
     { id: 'wallpaper', label: 'Wallpaper', meta: s.wallpaperId.startsWith('custom:') ? 'Custom image' : 'Built-in', icon: 'image' },
@@ -730,9 +735,11 @@ function About() {
         <div className="tiny">OS 1.0 “Retro Edition”</div>
       </div>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
-        <b>Privacy:</b> Your files, photos, and passwords never leave your device. There is no
-        tracking, no analytics and no cookies. The only network call this app makes on its own is
-        the reader-mode proxy for pages you explicitly open.
+        <b>Privacy:</b> Your files, photos, notes, contacts, messages and passwords stay in this
+        browser on this device; OWL does not upload them to its own server. API keys are stored locally.
+        When you use Gemini, the message or call text you submit is sent directly to Google. YouTube
+        search terms are sent directly to YouTube. Opened websites also connect to their own services.
+        There is no OWL tracking, analytics or advertising cookie.
         <hr className="sep" />
         <b>Credits:</b> React, Vite, Zustand, idb-keyval, jsmediatags. Icons and device artwork are
         original. All sounds are synthesised with the Web Audio API.
@@ -766,6 +773,100 @@ function Help() {
       <div className="owlSection" style={{ padding: '6px 0 0' }}>Power</div>
       <div className="tiny">Short press End locks the phone. Hold End for one second for Lock / Restart / Shutdown.</div>
       <button className="btn" onClick={() => useStore.getState().openApp('setup')} style={{ marginTop: 4 }}>Re-run setup wizard</button>
+    </div>
+  );
+}
+
+
+/* ------------------------- Keyboard mode & AI ---------------------------- */
+
+function KeyboardSettings() {
+  const mode = useStore((st) => st.settings.keyboardMode);
+  const set = useStore((st) => st.setSetting);
+  return (
+    <div style={{ padding: 8, display: 'grid', gap: 8 }}>
+      <div className="fieldLabel">On-screen keyboard</div>
+      <button className={`rowBtn ${mode === 'simple' ? 'active' : ''}`} onClick={() => set('keyboardMode', 'simple')}>
+        <Icon name="phone" size={16} />
+        <span style={{ flex: 1 }}>Classic phone keypad</span>
+        <span className="meta">{mode === 'simple' ? 'Selected' : '12-key'}</span>
+      </button>
+      <button className={`rowBtn ${mode === 'blackberry' ? 'active' : ''}`} onClick={() => set('keyboardMode', 'blackberry')}>
+        <Icon name="keyboard" size={16} />
+        <span style={{ flex: 1 }}>BlackBerry QWERTY</span>
+        <span className="meta">{mode === 'blackberry' ? 'Selected' : 'Full keyboard'}</span>
+      </button>
+      <div className="card tiny" style={{ lineHeight: 1.6 }}>
+        Classic mode uses multi-tap letters on the number keys (2=ABC, 3=DEF … 9=WXYZ).
+        Tap the same key again quickly to cycle letters. In the Phone dialler the same
+        keypad enters digits. BlackBerry mode keeps the full QWERTY layout.
+      </div>
+      <div className="tiny">The selected mode is saved on this device and is used on touch screens and desktop clicks.</div>
+    </div>
+  );
+}
+
+function AISettings() {
+  const settings = useStore((st) => st.settings);
+  const update = useStore((st) => st.updateSettings);
+  const toast = useStore((st) => st.toast);
+  const [gemini, setGemini] = useState(settings.geminiApiKey || '');
+  const [youtube, setYoutube] = useState(settings.youtubeApiKey || '');
+  useEffect(() => setGemini(settings.geminiApiKey || ''), [settings.geminiApiKey]);
+  useEffect(() => setYoutube(settings.youtubeApiKey || ''), [settings.youtubeApiKey]);
+
+  return (
+    <div style={{ padding: 8, display: 'grid', gap: 8 }}>
+      <div className="fieldLabel">Google Gemini API key</div>
+      <Field value={gemini} onChange={setGemini} kind="password" placeholder="Paste your Gemini API key" />
+      <button className="btn" onClick={async () => {
+        try {
+          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser. Use BlackBerry keyboard mode or paste into a supported field.');
+          const value = (await navigator.clipboard.readText()).trim();
+          if (!value) throw new Error('Clipboard is empty.');
+          setGemini(value);
+          toast('Gemini key pasted — press Save to keep it');
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Could not read clipboard');
+        }
+      }}>Paste Gemini key from clipboard</button>
+      <button className="btn primary" onClick={() => { update({ geminiApiKey: gemini.trim() }); toast(gemini.trim() ? 'Gemini key saved on this device' : 'Gemini key removed'); }}>
+        Save Gemini key
+      </button>
+      <button className={`chip ${settings.aiAutoReply ? 'on' : ''}`} onClick={() => update({ aiAutoReply: !settings.aiAutoReply })}>
+        {settings.aiAutoReply ? '✓ AI SMS auto-replies enabled' : 'Enable AI SMS auto-replies'}
+      </button>
+      <button className={`chip ${settings.aiAutoAnswer ? 'on' : ''}`} onClick={() => update({ aiAutoAnswer: !settings.aiAutoAnswer })}>
+        {settings.aiAutoAnswer ? '✓ Gemini auto-answers simulated calls' : 'Enable Gemini call auto-answer'}
+      </button>
+      <div className="divider" />
+      <div className="fieldLabel">YouTube Data API key</div>
+      <Field value={youtube} onChange={setYoutube} kind="password" placeholder="Paste a YouTube Data API v3 key" />
+      <button className="btn" onClick={async () => {
+        try {
+          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser.');
+          const value = (await navigator.clipboard.readText()).trim();
+          if (!value) throw new Error('Clipboard is empty.');
+          setYoutube(value);
+          toast('YouTube key pasted — press Save to keep it');
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Could not read clipboard');
+        }
+      }}>Paste YouTube key from clipboard</button>
+      <button className="btn" onClick={() => { update({ youtubeApiKey: youtube.trim() }); toast(youtube.trim() ? 'YouTube key saved on this device' : 'YouTube key removed'); }}>
+        Save YouTube key
+      </button>
+      <div className="card tiny" style={{ lineHeight: 1.6 }}>
+        <b>Privacy & billing:</b> Keys are stored in this browser's local settings, not on an OWL server.
+        Requests go directly from this device to Google. Gemini receives the SMS text or conversation
+        prompt when AI is used. AI auto-replies and call auto-answer are opt-in. Protect your keys, restrict them in Google AI Studio / Cloud Console,
+        and review Google's own usage and billing limits.
+      </div>
+      <div className="tiny">
+        YouTube search uses YouTube Data API v3 and needs its own Google Cloud key with the API enabled.
+        Public embeddable videos can play without signing in; some age-restricted or embedding-disabled
+        videos must open on YouTube instead.
+      </div>
     </div>
   );
 }
