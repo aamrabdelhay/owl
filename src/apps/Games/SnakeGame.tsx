@@ -87,6 +87,23 @@ function buildWalls(mode: Mode, level: number, wrap: boolean): Set<string> {
         for (let i = 0; i < len; i++) {
           const wx = horizontal ? x + i : x;
           const wy = horizontal ? y : y + i;
+          // Keep the opening area around the initial snake clear.
+          if (Math.abs(wx - 4) <= 2 && Math.abs(wy - 7) <= 2) continue;
+          if (wx > 0 && wx < COLS - 1 && wy > 0 && wy < ROWS - 1) walls.add(`${wx},${wy}`);
+        }
+      }
+    }
+    if (level > MAZES.length) {
+      const rand = seededRandom(level * 2029 + 41);
+      const blocks = Math.min(18, 4 + Math.floor(level / 2));
+      for (let block = 0; block < blocks; block++) {
+        const horizontal = rand() > 0.5;
+        const len = 2 + Math.floor(rand() * 3);
+        const x = 2 + Math.floor(rand() * (COLS - 5));
+        const y = 2 + Math.floor(rand() * (ROWS - 5));
+        for (let i = 0; i < len; i++) {
+          const wx = horizontal ? x + i : x;
+          const wy = horizontal ? y : y + i;
           // Keep the starting corridor clear.
           if (Math.abs(wx - 4) <= 2 && Math.abs(wy - 7) <= 2) continue;
           if (wx > 0 && wx < COLS - 1 && wy > 0 && wy < ROWS - 1) walls.add(`${wx},${wy}`);
