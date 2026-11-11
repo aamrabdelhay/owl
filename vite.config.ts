@@ -24,9 +24,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // Bump this on every release: a new cache name makes the new worker
-        // discard every asset from the previous deploy instead of mixing them.
-        cacheId: 'owl-v2',
+        // Bump this on every release so clients cannot mix old and new assets.
+        cacheId: 'owl-v3',
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
@@ -55,16 +54,10 @@ export default defineConfig({
     chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
-        // jsmediatags (ID3 reader) ships a browser IIFE bundle with no ESM
-        // entry, so it is loaded lazily by URL at runtime instead of bundled.
-        chunkFileNames: 'assets/[name]-[hash].js',
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'react';
-            if (id.includes('jsmediatags')) return 'tags';
-            return 'vendor';
-          }
-        }
+        // Keep the browser-only ID3 reader in a stable, lazy-loaded chunk.
+        // Let Rollup group React and shared dependencies automatically: the
+        // former manual React/vendor split produced a circular chunk graph.
+        chunkFileNames: 'assets/[name]-[hash].js'
       }
     }
   }
