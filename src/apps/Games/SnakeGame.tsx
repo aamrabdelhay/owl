@@ -175,7 +175,7 @@ export default function SnakeGame() {
     setPaused(false);
     setRunning(false);
     setReady(true);
-    setStatus(nextMode === 'maze' ? `${MAZES[Math.min(nextLevel - 1, MAZES.length - 1)].name} · eat 6 mice` : nextMode === 'daily' ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}` : 'Classic');
+    setStatus(nextMode === 'maze' ? `${MAZES[Math.min(nextLevel - 1, MAZES.length - 1)].name} · Level ${nextLevel}/25 · eat 6 mice` : nextMode === 'daily' ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}` : 'Classic');
     spawnMouse();
   }, [mode, wrap, speed, spawnMouse, settings.language]);
 
@@ -242,7 +242,7 @@ export default function SnakeGame() {
       setMiceEaten(g.miceEaten);
       spawnMouse();
       if (mode === 'maze' && g.miceEaten >= 6) {
-        if (g.level >= MAZES.length) {
+        if (g.level >= 25) {
           sfx('win');
           die('Campaign complete!');
           return;
@@ -253,8 +253,9 @@ export default function SnakeGame() {
         g.miceEaten = 0;
         setLevel(nextLevel);
         setMiceEaten(0);
-        setStatus(`${MAZES[nextLevel - 1].name} · eat 6 mice`);
-        toast(`Level ${nextLevel}: ${MAZES[nextLevel - 1].name}`);
+        const mazeName = MAZES[nextLevel - 1]?.name || `Generated Maze ${nextLevel}`;
+        setStatus(`${mazeName} · Level ${nextLevel}/25 · eat 6 mice`);
+        toast(`Level ${nextLevel}: ${mazeName}`);
         spawnMouse();
       }
     }
