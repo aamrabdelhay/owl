@@ -34,7 +34,7 @@ function evaluate(position: ChessInstance, perspective: 'w' | 'b'): number {
   return score;
 }
 
-function minimax(position: Chess, depth: number, alpha: number, beta: number, perspective: 'w' | 'b'): number {
+function minimax(position: ChessInstance, depth: number, alpha: number, beta: number, perspective: 'w' | 'b'): number {
   if (position.isCheckmate()) return position.turn() === perspective ? -100000 - depth : 100000 + depth;
   if (position.isDraw()) return 0;
   if (depth <= 0) return evaluate(position, perspective);
@@ -58,7 +58,7 @@ function minimax(position: Chess, depth: number, alpha: number, beta: number, pe
   return best;
 }
 
-function chooseComputerMove(position: Chess, level: number) {
+function chooseComputerMove(position: ChessInstance, level: number) {
   const moves = position.moves({ verbose: true });
   if (!moves.length) return null;
   const perspective = position.turn();
