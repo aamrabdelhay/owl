@@ -202,7 +202,7 @@ export default function ChessGame() {
   };
 
   const files = playerColor === 'w' ? Array.from(FILES) : Array.from(FILES).reverse();
-  const rankOrder = playerColor === 'w' ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
+  const rankOrder = playerColor === 'w' ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
 
   return (
     <GameShell
