@@ -159,7 +159,7 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
         className="phoneTilt"
         style={{ transform: 'none' }}
       >
-        <div className={`phone ${screen === 'boot' ? 'booting' : ''}`} data-trail={trail} role="application" aria-label="OWL phone simulator">
+        <div className={`phone ${screen === 'boot' ? 'booting' : ''}`} style={{ gridTemplateRows: `${Math.round(settings.screenRatio * 100)}% ${100 - Math.round(settings.screenRatio * 100)}%` }} data-trail={trail} role="application" aria-label="OWL phone simulator">
           {/* side keys */}
           <button
             type="button"
@@ -252,7 +252,7 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
               onContextMenu={(e) => e.preventDefault()}
             >
               <OwlLogo size={20} />
-              <span className="navBadge">MENU</span>
+              <span className="navBadge">{screen === 'home' ? 'APPS' : 'MENU'}</span>
             </button>
 
             <div className="trackpadWrap">
