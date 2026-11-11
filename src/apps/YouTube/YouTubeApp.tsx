@@ -110,8 +110,7 @@ export default function YouTubeApp() {
       url.searchParams.set('videoEmbeddable', 'true');
       url.searchParams.set('maxResults', '18');
       url.searchParams.set('q', q);
-      url.searchParams.set('key', settings.youtubeApiKey);
-      const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+      const response = await fetch(url.toString(), { headers: { Accept: 'application/json', 'x-goog-api-key': settings.youtubeApiKey } });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error?.message || `YouTube search failed (${response.status})`);
       const items: VideoItem[] = (data.items || []).flatMap((item: any) => {
