@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Chess, type Square } from 'chess.js';
+import { Chess, type Square } from 'chess.mjs';
 import { useStore } from '../../os/store';
 import { GameShell, useScores, useGameSfx } from './gameKit';
 
