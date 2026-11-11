@@ -11,6 +11,7 @@ interface VideoItem {
   description: string;
   thumbnail: string;
   publishedAt: string;
+  source?: string;
 }
 
 type Tab = 'search' | 'searchHistory' | 'watchHistory';
@@ -46,14 +47,52 @@ function videoIdFrom(input: string): string | null {
   }
 }
 
+const INVIDIOUS_INSTANCES = [
+  'https://invidious.nerdvpn.de',
+  'https://yt.chocolatemoo53.com',
+  'https://invidious.tiekoetter.com',
+  'https://inv.nadeko.net',
+];
+
+async function searchWithoutKey(query: string): Promise<VideoItem[]> {
+  const results = await Promise.all(INVIDIOUS_INSTANCES.map(async (instance) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5500);
+    try {
+      const url = `${instance}/api/v1/search?type=video&page=1&q=${encodeURIComponent(query)}`;
+      const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
+      if (!response.ok) throw new Error(`Search provider returned ${response.status}`);
+      const data = await response.json();
+      const videos: VideoItem[] = (Array.isArray(data) ? data : [])
+        .filter((item: any) => item?.type === 'video' && /^[\\w-]{11}$/.test(String(item.videoId || '')))
+        .slice(0, 20)
+        .map((item: any) => ({
+          id: String(item.videoId),
+          title: String(item.title || 'YouTube video'),
+          channel: String(item.author || 'YouTube'),
+          description: String(item.description || ''),
+          thumbnail: String(item.videoThumbnails?.find((t: any) => t.quality === 'medium')?.url || item.videoThumbnails?.[0]?.url || `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`),
+          publishedAt: item.published ? new Date(Number(item.published) * 1000).toISOString() : String(item.publishedText || ''),
+          source: instance,
+        }));
+      return videos;
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }));
+  const found = results.find((items) => items.length > 0);
+  if (!found) throw new Error('The public YouTube search mirrors are temporarily unavailable. Try again in a moment, or paste a video link.');
+  return found;
+}
+
 export default function YouTubeApp() {
-  const settings = useStore((s) => s.settings);
   const toast = useStore((s) => s.toast);
   const [tab, setTab] = useState<Tab>('search');
   const [query, setQuery] = useState('');
   const [directUrl, setDirectUrl] = useState('');
   const [results, setResults] = useState<VideoItem[]>([]);
   const [selected, setSelected] = useState<VideoItem | null>(null);
+  const [proxyPlayer, setProxyPlayer] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => readList(SEARCH_KEY, []));
   const [watchHistory, setWatchHistory] = useState<VideoItem[]>(() => readList(WATCH_KEY, []));
   const [loading, setLoading] = useState(false);
@@ -72,6 +111,7 @@ export default function YouTubeApp() {
 
   const play = (video: VideoItem) => {
     setSelected(video);
+    setProxyPlayer(false);
     setTab('search');
     saveWatchHistory(video);
   };
@@ -93,39 +133,13 @@ export default function YouTubeApp() {
   const search = async (raw = query) => {
     const q = raw.trim();
     if (!q || loading) return;
-    if (!settings.youtubeApiKey) {
-      setError('Add a YouTube Data API v3 key in Settings → AI & online services, or paste a video link above.');
-      setTab('search');
-      return;
-    }
     setLoading(true);
     setError('');
     setSelected(null);
     setTab('search');
     saveSearchHistory([q, ...searchHistory.filter((item) => item.toLowerCase() !== q.toLowerCase())].slice(0, 30));
     try {
-      const url = new URL('https://www.googleapis.com/youtube/v3/search');
-      url.searchParams.set('part', 'snippet');
-      url.searchParams.set('type', 'video');
-      url.searchParams.set('videoEmbeddable', 'true');
-      url.searchParams.set('maxResults', '18');
-      url.searchParams.set('q', q);
-      const response = await fetch(url.toString(), { headers: { Accept: 'application/json', 'x-goog-api-key': settings.youtubeApiKey } });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error?.message || `YouTube search failed (${response.status})`);
-      const items: VideoItem[] = (data.items || []).flatMap((item: any) => {
-        const id = item?.id?.videoId;
-        const snippet = item?.snippet;
-        if (!id || !snippet) return [];
-        return [{
-          id,
-          title: String(snippet.title || 'Untitled video'),
-          channel: String(snippet.channelTitle || 'YouTube'),
-          description: String(snippet.description || ''),
-          thumbnail: String(snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || ''),
-          publishedAt: String(snippet.publishedAt || ''),
-        }];
-      });
+      const items = await searchWithoutKey(q);
       setResults(items);
       if (!items.length) setError('No embeddable videos were found for that search.');
     } catch (err) {
@@ -151,8 +165,10 @@ export default function YouTubeApp() {
         <div className="appBody" style={{ padding: 6, display: 'flex', flexDirection: 'column', gap: 5 }}>
           <div style={{ width: '100%', minHeight: 200, aspectRatio: '16 / 9', background: '#000', borderRadius: 6, overflow: 'hidden' }}>
             <iframe
-              key={selected.id}
-              src={`https://www.youtube-nocookie.com/embed/${selected.id}?playsinline=1&rel=0&modestbranding=1`}
+              key={`${selected.id}-${proxyPlayer ? 'proxy' : 'youtube'}`}
+              src={proxyPlayer && selected.source
+                ? `${selected.source}/embed/${selected.id}`
+                : `https://www.youtube-nocookie.com/embed/${selected.id}?playsinline=1&rel=0&modestbranding=1`}
               title={selected.title}
               referrerPolicy="strict-origin-when-cross-origin"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -164,12 +180,16 @@ export default function YouTubeApp() {
           <div className="tiny">{selected.channel}{selected.publishedAt ? ` · ${new Date(selected.publishedAt).toLocaleDateString()}` : ''}</div>
           <div className="tiny" style={{ maxHeight: 44, overflow: 'auto', lineHeight: 1.4 }}>{selected.description}</div>
           <div className="btnRow">
-            <button className="btn primary" onClick={() => window.open(`https://www.youtube.com/watch?v=${selected.id}`, '_blank', 'noopener,noreferrer')}>
-              <Icon name="globe" size={10} /> Open on YouTube
+
+            <button className="btn" onClick={() => {
+              if (!selected.source) { toast('This direct link has no available privacy mirror.'); return; }
+              setProxyPlayer((value) => !value);
+            }} disabled={!selected.source}>
+              {proxyPlayer ? 'Use YouTube player' : 'Try privacy player'}
             </button>
             <button className="btn" onClick={() => { setSelected(null); setTab('search'); }}>Back to results</button>
           </div>
-          <div className="tiny">Public embedded playback. Videos blocked by their owner, age restrictions, or YouTube's regional rules may need to open on YouTube.</div>
+          <div className="tiny">No sign-in or YouTube API key. Public videos play in the built-in player; some age-restricted, region-blocked or embedding-disabled videos may still be refused by YouTube.</div>
         </div>
       ) : (
         <>
@@ -192,7 +212,7 @@ export default function YouTubeApp() {
                   <div style={{ flex: 1 }}><Field value={directUrl} onChange={setDirectUrl} placeholder="Paste YouTube link or video ID" onSubmit={playDirect} /></div>
                   <button className="btn" onClick={playDirect}>Play</button>
                 </div>
-                {!settings.youtubeApiKey && <div className="tiny">In-app search needs a YouTube Data API v3 key. Playback from a public video link does not need a key or sign-in.</div>}
+                <div className="tiny">Anonymous search · no Google account · no YouTube API key</div>
                 {error && <div className="tiny" style={{ color: 'var(--red)' }}>{error}</div>}
               </div>
               <div className="appBody">
@@ -203,7 +223,7 @@ export default function YouTubeApp() {
                     <div style={{ minWidth: 0, display: 'grid', gap: 2, textAlign: 'left' }}>
                       <span style={{ fontSize: 10, lineHeight: 1.25, fontWeight: 600 }}>{video.title}</span>
                       <span className="tiny">{video.channel}</span>
-                      <span className="tiny" style={{ opacity: .7 }}>{video.publishedAt ? new Date(video.publishedAt).toLocaleDateString() : ''}</span>
+                      <span className="tiny" style={{ opacity: .7 }}>{video.publishedAt ? (/^\\d{4}-/.test(video.publishedAt) ? new Date(video.publishedAt).toLocaleDateString() : video.publishedAt) : ''}</span>
                     </div>
                   </button>
                 ))}
