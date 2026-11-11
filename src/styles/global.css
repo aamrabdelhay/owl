@@ -1765,3 +1765,42 @@ body { height: 100vh; height: 100dvh; }
   scrollbar-width: thin;
 }
 .chessLevels .chip { min-width: 22px; justify-content: center; padding: 2px 4px; }
+
+
+/* Classic S60-style application list option in the app drawer. */
+.drawerGrid.classicList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 7px;
+}
+.drawerGrid.classicList .drawerCell {
+  width: 100%;
+  min-height: 35px;
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 4px 7px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--line);
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(255,255,255,.025), transparent);
+  text-align: left;
+}
+.drawerGrid.classicList .drawerCell > span:last-child {
+  flex: 1;
+  text-align: left;
+  font-size: 10px;
+}
+.drawerGrid.classicList .drawerCell .appIcon {
+  width: 26px !important;
+  height: 26px !important;
+  flex: 0 0 26px;
+}
+.drawerGrid.classicList .drawerCell:focus-visible,
+.drawerGrid.classicList .drawerCell:active {
+  border-color: var(--hl);
+  background: var(--panel-2);
+}
