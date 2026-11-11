@@ -54,7 +54,7 @@ export default function App() {
       const el = clipRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      if (!rect.width) return;
+      if (!rect.width || !rect.height) return;
       // Keep the 360px logical height, but expand the logical width to the
       // entire upper half of the viewport so the phone display uses 100% width.
       const s = rect.height / SCREEN_H;
