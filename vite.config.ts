@@ -25,7 +25,7 @@ export default defineConfig({
       },
       workbox: {
         // Bump this on every release so clients cannot mix old and new assets.
-        cacheId: 'owl-v4',
+        cacheId: 'owl-v5',
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
