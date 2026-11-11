@@ -40,6 +40,11 @@ export const APPS: AppMeta[] = [
     category: 'internet', hotkey: 'b', dock: true,
     load: () => import('../apps/Web/WebApp'),
   },
+  {
+    id: 'youtube', name: n('YouTube', 'يوتيوب'), icon: 'video', color: '#f04b4b',
+    category: 'internet', hotkey: '', dock: false,
+    load: () => import('../apps/YouTube/YouTubeApp'),
+  },
 
   /* -------------------------------- Media -------------------------------- */
   {
@@ -218,7 +223,7 @@ export const GAME_IDS = APPS.filter((a) => a.category === 'games' && a.dock === 
 
 export const DOCK_IDS = ['messages', 'messenger', 'contacts', 'web', 'music', 'calendar'];
 
-export const MEDIA_IDS = ['music', 'videos', 'pictures', 'voice', 'ringtones', 'radio', 'camera'];
+export const MEDIA_IDS = ['music', 'videos', 'pictures', 'voice', 'ringtones', 'radio', 'camera', 'youtube'];
 
 export function appName(id: string, lang: Lang): string {
   const app = APP_MAP[id];
