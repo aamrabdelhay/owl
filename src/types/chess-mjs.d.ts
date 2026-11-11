@@ -25,7 +25,8 @@ declare module 'chess.mjs' {
     turn(): Color;
     board(): (Piece | null)[][];
     get(square: Square): Piece | null;
-    moves(options?: { square?: Square; verbose?: boolean }): string[] | Move[];
+    moves(options: { square?: Square; verbose: true }): Move[];
+    moves(options?: { square?: Square; verbose?: false }): string[];
     move(move: string | { from: Square; to: Square; promotion?: PieceSymbol }): Move | null;
     undo(): Move | null;
     history(options?: { verbose?: boolean }): string[] | Move[];
