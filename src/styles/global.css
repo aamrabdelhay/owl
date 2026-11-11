@@ -1566,7 +1566,7 @@ body { height: 100vh; height: 100dvh; }
   height: auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(4, minmax(0, 1fr)) auto;
+  grid-template-rows: repeat(3, minmax(0, 1fr)) auto;
   gap: clamp(5px, 1vw, 12px);
   padding: clamp(4px, 1vw, 10px) clamp(2px, 1vw, 10px) 2px;
   border-top: 1px solid rgba(255,255,255,.1);
@@ -1594,6 +1594,24 @@ body { height: 100vh; height: 100dvh; }
   color: #ffe5a5;
 }
 .simpleKey b { font-family: var(--font-display); font-size: clamp(19px, 3.2vw, 36px); line-height: 1; }
+.simpleActions {
+  grid-column: 1 / -1;
+  min-height: clamp(26px, 4.2dvh, 38px);
+  display: grid;
+  grid-template-columns: .8fr 1.4fr .8fr 1fr;
+  gap: clamp(4px, .7vw, 8px);
+}
+.simpleActions button {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #2d3542, #141a23);
+  color: #dbe4f1;
+  font-size: clamp(8px, .9vw, 12px);
+  font-weight: 700;
+  letter-spacing: .06em;
+  touch-action: manipulation;
+}
 .simpleKey span { font-size: clamp(7px, 1vw, 12px); letter-spacing: .16em; color: #b9c7d9; }
 .simpleKbHint {
   grid-column: 1 / -1;
