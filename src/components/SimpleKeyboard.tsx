@@ -124,7 +124,18 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
         </button>
       ))}
       <div className="simpleActions">
-        <button type="button" onClick={() => tap('0')} aria-label="Zero">0</button>
+        <button
+          type="button"
+          onPointerDown={() => startPress('0')}
+          onPointerUp={endPress}
+          onPointerCancel={endPress}
+          onPointerLeave={endPress}
+          onClick={() => {
+            if (longPressTriggered.current) { longPressTriggered.current = false; return; }
+            tap('0');
+          }}
+          aria-label="Zero; short press for space, hold for zero"
+        >0</button>
         <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch(' ', 'Space'); }}>SPACE</button>
         <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch('Backspace', 'Backspace'); }}>⌫</button>
         <button type="button" onClick={() => { setUpperCase((value) => !value); setPending(null); lastAt.current = 0; }}> {upperCase ? 'ABC' : 'abc'} </button>
