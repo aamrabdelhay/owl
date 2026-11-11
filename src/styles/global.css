@@ -1700,3 +1700,68 @@ body { height: 100vh; height: 100dvh; }
 @media (max-height: 560px) {
   .phoneInputArea .navRow { flex-basis: calc(32px * var(--owl-kb-scale, 1)); }
 }
+
+
+/* OWL chess board — tactile Symbian-era palette and readable piece silhouettes. */
+.chessBoard {
+  width: min(100%, 330px);
+  margin: 0 auto;
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  border: 3px solid #272c35;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 3px 14px rgba(0,0,0,.45);
+  touch-action: manipulation;
+}
+.chessSquare {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+.chessSquare.light { background: #e7d8b5; color: #201c18; }
+.chessSquare.dark { background: #8b6b4b; color: #fff7e9; }
+.chessSquare.selected { background: #c6a341; box-shadow: inset 0 0 0 3px #fff0a3; }
+.chessSquare.last { box-shadow: inset 0 0 0 2px rgba(75,160,255,.75); }
+.chessPiece {
+  position: relative;
+  z-index: 1;
+  font-family: "DejaVu Sans", "Noto Sans Symbols 2", "Segoe UI Symbol", serif;
+  font-size: clamp(19px, 5.4vw, 34px);
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0,0,0,.25);
+}
+.chessPiece.white { color: #fffdf4; text-shadow: 0 1px 1px #1d1710, 0 0 2px #16120d; }
+.chessPiece.black { color: #161a20; text-shadow: 0 1px 0 rgba(255,255,255,.25); }
+.chessTarget {
+  position: absolute;
+  width: 24%;
+  height: 24%;
+  border-radius: 50%;
+  background: rgba(10,20,24,.38);
+  z-index: 0;
+}
+.chessCoord {
+  position: absolute;
+  left: 2px;
+  top: 1px;
+  font-size: clamp(6px, .8vw, 9px);
+  line-height: 1;
+  opacity: .65;
+}
+.chessCoord.file { left: auto; right: 2px; top: auto; bottom: 1px; }
+.chessLevels {
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  scrollbar-width: thin;
+}
+.chessLevels .chip { min-width: 22px; justify-content: center; padding: 2px 4px; }
