@@ -62,7 +62,7 @@ async function searchPublicYouTube(query: string): Promise<VideoItem[]> {
   let lastError = 'No public search service is available right now.';
   for (const instance of SEARCH_INSTANCES) {
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 4200);
+    const timeout = window.setTimeout(() => controller.abort(), 3000);
     try {
       const url = new URL(`${instance}/api/v1/search`);
       url.searchParams.set('q', query);
