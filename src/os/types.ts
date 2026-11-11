@@ -5,9 +5,14 @@ export type Lang = 'en' | 'ar';
 export type ProfileId = 'normal' | 'loud' | 'vibrate' | 'silent' | 'meeting' | 'custom';
 export type Screen = 'boot' | 'home' | 'lock' | 'off' | 'app';
 export type DockRows = 'one' | 'two' | 'hidden';
+export type KeyboardMode = 'blackberry' | 'simple';
 
 export interface Settings {
   language: Lang;
+  keyboardMode: KeyboardMode;
+  geminiApiKey: string;
+  youtubeApiKey: string;
+  aiAutoReply: boolean;
   userName: string;
   theme: ThemeId;
   highContrast: boolean;
