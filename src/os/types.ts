@@ -10,6 +10,7 @@ export type KeyboardMode = 'blackberry' | 'simple';
 export interface Settings {
   language: Lang;
   keyboardMode: KeyboardMode;
+  screenRatio: number;
   geminiApiKey: string;
   youtubeApiKey: string;
   aiAutoReply: boolean;
