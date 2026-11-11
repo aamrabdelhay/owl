@@ -13,6 +13,8 @@ export function defaultSettings(now = Date.now()): Settings {
   return {
     language: 'en',
     keyboardMode: 'blackberry',
+    screenShare: 50,
+    keyboardScale: 1,
     geminiApiKey: '',
     youtubeApiKey: '',
     aiAutoReply: false,
@@ -57,7 +59,7 @@ export function defaultSettings(now = Date.now()): Settings {
     passwordHash: '',
     passwordSalt: '',
     passwordIsPin: false,
-    autoLock: 60,
+    autoLock: 0,
     powerSaver: false,
     bluetooth: true,
     wifiOnly: false,
@@ -78,7 +80,17 @@ export function loadSettingsSync(): Settings {
     const parsed = JSON.parse(raw) as Partial<Settings>;
     // The setup takeover is intentionally removed; restore the handset
     // directly and keep home-screen hotkeys enabled for existing installs.
-    return deepMergeSettings(defaultSettings(), { ...parsed, onboarded: true });
+    const savedGeminiKey = localStorage.getItem('owl:geminiApiKey:v1') || parsed.geminiApiKey || '';
+    return deepMergeSettings(defaultSettings(), {
+      ...parsed,
+      // OWL no longer uses a lock-screen password. Remove old hashes as well.
+      passwordHash: '',
+      passwordSalt: '',
+      passwordIsPin: false,
+      autoLock: 0,
+      geminiApiKey: savedGeminiKey,
+      onboarded: true,
+    });
   } catch {
     return defaultSettings();
   }
@@ -91,6 +103,8 @@ function persistSettings(settings: Settings) {
   saveTimer = window.setTimeout(() => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      // A separate stable key prevents a future settings-schema migration from losing Gemini.
+      localStorage.setItem('owl:geminiApiKey:v1', settings.geminiApiKey || '');
     } catch { /* quota */ }
   }, 180);
 }
