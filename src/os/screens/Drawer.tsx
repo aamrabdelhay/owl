@@ -28,6 +28,7 @@ export function Drawer() {
   const toast = useStore((s) => s.toast);
   const showDialog = useStore((s) => s.showDialog);
   const lang = settings.language;
+  const [listView, setListView] = useState(true);
 
   const list = useMemo(() => {
     const base = APPS.filter((a) => !settings.hiddenApps.includes(a.id) && a.id !== 'snake' && a.id !== 'breaker'
@@ -118,6 +119,9 @@ export function Drawer() {
               {lang === 'ar' ? t.ar : t.en}
             </button>
           ))}
+          <button className="iconBtn" onClick={() => setListView((v) => !v)} aria-label={listView ? 'Show icon grid' : 'Show application list'} title={listView ? 'Icon grid' : 'Application list'}>
+            <Icon name={listView ? 'grid' : 'list'} size={12} />
+          </button>
           <button className="iconBtn" style={{ marginLeft: 'auto' }} onClick={closeDrawer} aria-label="Close drawer">✕</button>
         </div>
 
@@ -153,7 +157,7 @@ export function Drawer() {
             </div>
           </>
         ) : (
-          <div className="drawerGrid">
+          <div className={`drawerGrid ${listView ? 'classicList' : ''}`}>
             {settings.folders.map((f) => (
               <button key={f.id} className="drawerCell" onClick={() => setFolder(f.id)}>
                 <span
