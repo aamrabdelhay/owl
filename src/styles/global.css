@@ -1361,3 +1361,266 @@ hr.sep { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
   .solCard, .solStock, .solWaste, .solFoundation { height: 42px; }
   .solColumn { min-height: 168px; }
 }
+
+
+/* ===================== OWL full-screen opened handset ==================== */
+html, body, #root { width: 100%; height: 100%; min-height: 100%; }
+html, body { overflow: hidden; overscroll-behavior: none; }
+body { height: 100vh; height: 100dvh; }
+.desk {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  display: block;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0a1322, #02050a 78%);
+}
+.desk::after { display: none; }
+.deskGlow, .helper { display: none !important; }
+.phoneStage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  perspective: none;
+  display: block;
+  overflow: hidden;
+}
+.phoneTilt {
+  width: 100%;
+  height: 100%;
+  transform: none !important;
+  transition: none;
+  perspective: none;
+  will-change: auto;
+}
+.phone {
+  --pw: 100vw;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), transparent 12%),
+    linear-gradient(180deg, #171d27 0%, #090d14 52%, #10151e 100%);
+  container-type: inline-size;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.phone::before, .phone::after { display: none; }
+.phoneDisplayArea {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 3px 7px 5px;
+  background: linear-gradient(180deg, #1b222d, #0b1018);
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  overflow: hidden;
+}
+.phoneDisplayArea .topBezel {
+  flex: 0 0 clamp(20px, 4.2dvh, 38px);
+  min-height: 20px;
+  height: auto;
+  padding: 0 2% 3px;
+}
+.phoneDisplayArea .earpiece { transform: scale(.85); transform-origin: center; }
+.phoneDisplayArea .owlPlate { font-size: clamp(9px, 1.2vw, 16px); }
+.phoneDisplayArea .owlPlate svg { width: clamp(12px, 1.7vw, 22px); height: clamp(12px, 1.7vw, 22px); }
+.phoneDisplayArea .screenBezel {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+  padding: 4px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #030509, #151c27 50%, #030509);
+}
+.phoneDisplayArea .screenClip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #02060d;
+  box-shadow: 0 0 0 1px #000, inset 0 0 26px rgba(0,0,0,.78);
+}
+.phoneDisplayArea .screenScale {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 480px;
+  height: 360px;
+  transform-origin: center center;
+}
+.phoneDisplayArea .screenRoot {
+  position: absolute;
+  inset: 0;
+  width: 480px;
+  height: 360px;
+  max-width: none;
+  max-height: none;
+}
+.phoneInputArea {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px 7px max(3px, env(safe-area-inset-bottom));
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #151b25, #080b11 25%, #161c26 100%);
+}
+.phoneInputArea .navRow {
+  flex: 0 0 clamp(38px, 8dvh, 66px);
+  min-height: 34px;
+  padding: 4px 2px;
+  gap: clamp(6px, 1.6vw, 20px);
+  align-items: center;
+}
+.phoneInputArea .navKey {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  flex: 1 1 0;
+  border-radius: 9px;
+}
+.phoneInputArea .navKey svg { width: clamp(15px, 2vw, 24px); height: clamp(15px, 2vw, 24px); }
+.phoneInputArea .navKey .navBadge { bottom: 2px; font-size: clamp(6px, .7vw, 9px); }
+.phoneInputArea .trackpadWrap {
+  width: clamp(40px, 7.5vw, 90px);
+  height: clamp(34px, 6.6vw, 78px);
+  flex: 0 0 clamp(40px, 7.5vw, 90px);
+  margin: 0;
+}
+.phoneInputArea .trackpadRing { border-radius: 10px; padding: 3px; }
+.phoneInputArea .trackpadRing::after { inset: 3px; border-radius: 7px; }
+.phoneInputArea .trackpad { width: 74%; height: 74%; border-radius: 6px; }
+.phoneInputArea .kb {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  margin: 2px 0 0;
+  padding: 5px 1px 2px;
+  gap: clamp(3px, .8dvh, 8px);
+  border-top: 1px solid rgba(255,255,255,.1);
+  box-shadow: none;
+}
+.phoneInputArea .kbRow {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  gap: clamp(2px, .35vw, 5px);
+}
+.phoneInputArea .key {
+  height: auto;
+  min-height: 0;
+  flex: 1 1 0;
+  border-radius: clamp(4px, .65vw, 9px);
+  touch-action: manipulation;
+}
+.phoneInputArea .key .legend { gap: 2px; }
+.phoneInputArea .key .legend b { font-size: clamp(9px, 1.15vw, 16px); }
+.phoneInputArea .key .legend s { font-size: clamp(6px, .65vw, 9px); }
+.phoneInputArea .key.small b, .phoneInputArea .key.small .arr { font-size: clamp(7px, .85vw, 12px); }
+.phoneInputArea .key.space .legend b { font-size: clamp(6px, .6vw, 9px); }
+.phoneInputArea .leds {
+  flex: 0 0 10px;
+  padding: 1px 4px 0;
+  font-size: clamp(6px, .6vw, 8px);
+}
+.phoneInputArea .led i { width: 6px; height: 6px; }
+
+.simpleKb {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr)) auto;
+  gap: clamp(5px, 1vw, 12px);
+  padding: clamp(4px, 1vw, 10px) clamp(2px, 1vw, 10px) 2px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.simpleKey {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: clamp(7px, 1.1vw, 14px);
+  background: linear-gradient(180deg, #323a47, #171d27 60%, #0d1118);
+  color: #f2f5fa;
+  box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 2px 3px rgba(0,0,0,.65), 0 -2px 3px rgba(0,0,0,.5) inset;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.simpleKey:active, .simpleKey.active {
+  transform: translateY(1px);
+  border-color: var(--hl);
+  background: linear-gradient(180deg, #66552b, #33270f);
+  color: #ffe5a5;
+}
+.simpleKey b { font-family: var(--font-display); font-size: clamp(19px, 3.2vw, 36px); line-height: 1; }
+.simpleKey span { font-size: clamp(7px, 1vw, 12px); letter-spacing: .16em; color: #b9c7d9; }
+.simpleKbHint {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #74849a;
+  font-size: clamp(6px, .7vw, 9px);
+  letter-spacing: .15em;
+  padding: 1px 0;
+}
+.phoneInputArea .keyPreview { z-index: 9999; }
+.sideBtn { display: none !important; }
+
+@media (max-width: 620px), (pointer: coarse) {
+  .phoneDisplayArea { padding: max(2px, env(safe-area-inset-top)) 3px 4px; }
+  .phoneInputArea { padding: 2px 3px max(2px, env(safe-area-inset-bottom)); }
+  .phoneInputArea .navRow { flex-basis: clamp(36px, 7.4dvh, 52px); }
+  .phoneInputArea .trackpadWrap { width: 42px; height: 38px; flex-basis: 42px; }
+  .phoneInputArea .kb { gap: 3px; }
+  .phoneInputArea .kbRow { gap: 2px; }
+}
+@media (max-height: 560px) {
+  .phoneDisplayArea .topBezel { flex-basis: 19px; min-height: 19px; }
+  .phoneInputArea .navRow { flex-basis: 32px; min-height: 30px; }
+  .phoneInputArea .kb { gap: 2px; padding-top: 3px; }
+  .simpleKb { gap: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .phoneTilt { transition: none !important; }
+  .phoneInputArea .key, .simpleKey { transition: none !important; }
+}
