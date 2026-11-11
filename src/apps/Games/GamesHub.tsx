@@ -20,7 +20,7 @@ export interface GameMeta {
 
 export const GAMES: GameMeta[] = [
   { id: 'snake', name: 'Owl Snake', nameAr: 'أفعى البومة', icon: 'snake', color: '#4caf50', blurb: 'Mother owl leads a growing line of owlets. Golden mice double the danger.', keys: 'Arrows / WASD' },
-  { id: 'breaker', name: 'Owl Breaker', nameAr: 'كسّار البومة', icon: 'block', color: '#ef7d3f', blurb: 'Feather-ball versus a wall of bricks. Six levels and four power-ups.', keys: '← → / drag' },
+  { id: 'breaker', name: 'Owl Breaker', nameAr: 'كسّار البومة', icon: 'block', color: '#ef7d3f', blurb: 'Feather-ball versus a wall of bricks. 25 progressive levels and four power-ups.', keys: '← → / drag' },
   { id: 'skyowl', name: 'Sky Owl', nameAr: 'بومة السماء', icon: 'skyowl', color: '#4f9dff', blurb: 'Fly through the night and shoot down bats before they reach the nest.', keys: '↑ ↓ / tap' },
   { id: 'pairs', name: 'Pairs', nameAr: 'الأزواج', icon: 'cards', color: '#b06cf0', blurb: 'Flip and match the owl collection. Three board sizes.', keys: 'Arrows + F' },
   { id: 'mancala', name: 'Mancala', nameAr: 'المنقلة', icon: 'mancala', color: '#c9922f', blurb: 'Classic sowing game against an owl AI that hates losing.', keys: '1 – 6' },
@@ -28,6 +28,7 @@ export const GAMES: GameMeta[] = [
   { id: 'blocks', name: 'Block Stack', nameAr: 'مكعبات', icon: 'tetris', color: '#e0575b', blurb: 'Falling crates with ghost preview. Ten rows to a level.', keys: 'Arrows + Space' },
   { id: 'wordowl', name: 'Word Owl', nameAr: 'كلمة البومة', icon: 'word', color: '#e0b34b', blurb: 'Six guesses, two languages. English and Arabic dictionaries included.', keys: 'Type + Enter' },
   { id: 'solitaire', name: 'Solitaire', nameAr: 'سوليتير', icon: 'solitaire', color: '#3fa36b', blurb: 'Klondike with hints, auto-flip, and a saved game between visits.', keys: 'Arrows + Enter' },
+  { id: 'chess', name: 'Chess', nameAr: 'الشطرنج', icon: 'game', color: '#b7a27b', blurb: 'Play legal chess against the OWL computer across 25 difficulty levels.', keys: 'Tap squares / trackpad' },
 ];
 
 export default function GamesHub({ view, game }: { view?: string; game?: string }) {
