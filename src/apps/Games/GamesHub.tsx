@@ -19,7 +19,7 @@ export interface GameMeta {
 }
 
 export const GAMES: GameMeta[] = [
-  { id: 'snake', name: 'Owl Snake', nameAr: 'أفعى البومة', icon: 'snake', color: '#4caf50', blurb: 'Mother owl leads a growing line of owlets. Golden mice double the danger.', keys: 'Arrows / WASD' },
+  { id: 'snake', name: 'Owl Snake', nameAr: 'أفعى البومة', icon: 'snake', color: '#4caf50', blurb: 'Mother owl leads a growing line of owlets. 25 maze levels; golden mice double the danger.', keys: 'Arrows / WASD' },
   { id: 'breaker', name: 'Owl Breaker', nameAr: 'كسّار البومة', icon: 'block', color: '#ef7d3f', blurb: 'Feather-ball versus a wall of bricks. 25 progressive levels and four power-ups.', keys: '← → / drag' },
   { id: 'skyowl', name: 'Sky Owl', nameAr: 'بومة السماء', icon: 'skyowl', color: '#4f9dff', blurb: 'Fly through the night and shoot down bats before they reach the nest.', keys: '↑ ↓ / tap' },
   { id: 'pairs', name: 'Pairs', nameAr: 'الأزواج', icon: 'cards', color: '#b06cf0', blurb: 'Flip and match the owl collection. Three board sizes.', keys: 'Arrows + F' },
