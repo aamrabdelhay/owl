@@ -23,10 +23,29 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
   const [upperCase, setUpperCase] = useState(false);
   const lastAt = useRef(0);
   const timer = useRef<number | undefined>(undefined);
+  const holdTimer = useRef<number | undefined>(undefined);
+  const longPressTriggered = useRef(false);
 
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  useEffect(() => () => { window.clearTimeout(timer.current); window.clearTimeout(holdTimer.current); }, []);
 
   const dispatch = (key: string, code: string) => onKey({ key, code, dispatch: 'physical', ...EMPTY });
+
+  const startPress = (digit: string) => {
+    longPressTriggered.current = false;
+    window.clearTimeout(holdTimer.current);
+    holdTimer.current = window.setTimeout(() => {
+      longPressTriggered.current = true;
+      setPending(null);
+      lastAt.current = 0;
+      if (settings.keyClick) keyClick(settings.keyClickVolume);
+      if (settings.vibrateKeys) vibrate(7);
+      dispatch(digit, `Digit${digit}`);
+    }, 560);
+  };
+
+  const endPress = () => {
+    window.clearTimeout(holdTimer.current);
+  };
 
   const tap = (digit: string) => {
     if (settings.keyClick) keyClick(settings.keyClickVolume);
@@ -90,8 +109,15 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
           type="button"
           className={`simpleKey ${pending?.digit === key.n ? 'active' : ''}`}
           key={key.n}
-          onClick={() => tap(key.n)}
-          aria-label={`Key ${key.n} ${key.letters}`}
+          onPointerDown={() => startPress(key.n)}
+          onPointerUp={endPress}
+          onPointerCancel={endPress}
+          onPointerLeave={endPress}
+          onClick={() => {
+            if (longPressTriggered.current) { longPressTriggered.current = false; return; }
+            tap(key.n);
+          }}
+          aria-label={`Key ${key.n} ${key.letters}; hold to type the number`}
         >
           <b>{key.n}</b>
           <span>{key.letters}</span>
