@@ -77,8 +77,12 @@ const timer = useRef<number | undefined>(undefined);
 
   const aiIntroStarted = useRef(false);
   useEffect(() => {
+    if (callState !== 'active') {
+      if (callState === 'idle' || callState === 'dialing') aiIntroStarted.current = false;
+      return;
+    }
     const shouldStart = Boolean(aiStart || settings.aiAutoAnswer);
-    if (callState !== 'active' || !shouldStart || !settings.geminiApiKey || aiIntroStarted.current) return;
+    if (!shouldStart || !settings.geminiApiKey || aiIntroStarted.current) return;
     aiIntroStarted.current = true;
     setAiOpen(true);
     void sendAiMessage('You have answered a simulated phone call. Greet me naturally and begin a short, friendly conversation.');
