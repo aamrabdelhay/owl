@@ -210,10 +210,10 @@ interface OwlStore {
 const initialSettings = typeof window !== 'undefined' ? loadSettingsSync() : defaultSettings();
 
 export const useStore = create<OwlStore>((set, get) => ({
-  booting: true,
-  bootProgress: 0,
+  booting: false,
+  bootProgress: 100,
   powered: true,
-  screen: 'boot',
+  screen: 'home',
   locked: false,
   failedAttempts: 0,
   cooldownUntil: 0,
