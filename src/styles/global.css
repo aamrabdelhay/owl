@@ -1604,7 +1604,19 @@ body { height: 100vh; height: 100dvh; }
   padding: 1px 0;
 }
 .phoneInputArea .keyPreview { z-index: 9999; }
-.sideBtn { display: none !important; }
+.sideBtn {
+  display: block !important;
+  width: 7px;
+  min-height: 26px;
+  z-index: 35;
+  opacity: .96;
+  border: 1px solid rgba(255,255,255,.22);
+  border-top: 0;
+  border-bottom: 0;
+  touch-action: manipulation;
+}
+.sideBtn.left { left: 0; border-radius: 0 4px 4px 0; }
+.sideBtn.right { right: 0; border-radius: 4px 0 0 4px; }
 
 @media (max-width: 620px), (pointer: coarse) {
   .phoneDisplayArea { padding: max(2px, env(safe-area-inset-top)) 3px 4px; }
