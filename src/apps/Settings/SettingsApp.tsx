@@ -65,7 +65,7 @@ const LABELS: Record<string, string> = {
 function Root({ onOpen }: { onOpen: (s: Section) => void }) {
   const s = useStore((state) => state.settings);
   const rows: { id: Section; label: string; meta: string; icon: string }[] = [
-    { id: 'keyboard', label: 'Keyboard mode', meta: s.keyboardMode === 'simple' ? 'Classic 12-key' : 'BlackBerry QWERTY', icon: 'key' },
+    { id: 'keyboard', label: 'Keyboard & layout', meta: `${s.keyboardMode === 'simple' ? 'Classic T9' : 'BlackBerry QWERTY'} · Screen ${Math.round(s.screenRatio * 100)}%`, icon: 'key' },
     { id: 'ai', label: 'AI & online services', meta: s.geminiApiKey ? 'Gemini configured' : 'Set up Gemini / YouTube', icon: 'wand' },
     { id: 'display', label: 'Display', meta: `Brightness ${Math.round(s.brightness * 100)}%`, icon: 'sun' },
     { id: 'sound', label: 'Sound', meta: `${profileLabel(s.profile, s.language)}`, icon: 'volume' },
@@ -123,12 +123,13 @@ function Display() {
       </div>
       <Slider label="Font size" value={s.fontScale} min={0.85} max={1.35} onChange={(v) => set('fontScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
       <Slider label="UI scale" value={s.uiScale} min={0.85} max={1.15} onChange={(v) => set('uiScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
+      <Slider label="Display / keyboard split" value={s.screenRatio} min={0.42} max={0.68} onChange={(v) => set('screenRatio', v)} format={(v) => `Screen ${Math.round(v * 100)}% · Keys ${100 - Math.round(v * 100)}%`} />
       <div className="btnRow">
         <button className={`chip ${s.largeText ? 'on' : ''}`} onClick={() => set('largeText', !s.largeText)}>Large text</button>
         <button className={`chip ${s.highContrast ? 'on' : ''}`} onClick={() => set('highContrast', !s.highContrast)}>High contrast</button>
         <button className={`chip ${s.powerSaver ? 'on' : ''}`} onClick={() => set('powerSaver', !s.powerSaver)}>Power saver</button>
       </div>
-      <div className="tiny">Screen: 480 × 360 logical pixels (4:3), scaled to fit the device.</div>
+      <div className="tiny">The display and keyboard adapt to the available device size. Change the split above to give more room to the screen or the keys.</div>
     </div>
   );
 }
@@ -833,29 +834,19 @@ function AISettings() {
       <button className="btn primary" onClick={() => { update({ geminiApiKey: gemini.trim() }); toast(gemini.trim() ? 'Gemini key saved on this device' : 'Gemini key removed'); }}>
         Save Gemini key
       </button>
+      <button className="btn danger" onClick={() => {
+        try { localStorage.removeItem('owl:gemini:api-key:v1'); } catch { /* unavailable */ }
+        update({ geminiApiKey: '' });
+        setGemini('');
+        toast('Gemini key removed from this device');
+      }}>Remove saved Gemini key</button>
       <button className={`chip ${settings.aiAutoReply ? 'on' : ''}`} onClick={() => update({ aiAutoReply: !settings.aiAutoReply })}>
         {settings.aiAutoReply ? '✓ AI SMS auto-replies enabled' : 'Enable AI SMS auto-replies'}
       </button>
       <button className={`chip ${settings.aiAutoAnswer ? 'on' : ''}`} onClick={() => update({ aiAutoAnswer: !settings.aiAutoAnswer })}>
         {settings.aiAutoAnswer ? '✓ Gemini auto-answers simulated calls' : 'Enable Gemini call auto-answer'}
       </button>
-      <div className="divider" />
-      <div className="fieldLabel">YouTube Data API key</div>
-      <Field value={youtube} onChange={setYoutube} kind="password" placeholder="Paste a YouTube Data API v3 key" />
-      <button className="btn" onClick={async () => {
-        try {
-          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser.');
-          const value = (await navigator.clipboard.readText()).trim();
-          if (!value) throw new Error('Clipboard is empty.');
-          setYoutube(value);
-          toast('YouTube key pasted — press Save to keep it');
-        } catch (error) {
-          toast(error instanceof Error ? error.message : 'Could not read clipboard');
-        }
-      }}>Paste YouTube key from clipboard</button>
-      <button className="btn" onClick={() => { update({ youtubeApiKey: youtube.trim() }); toast(youtube.trim() ? 'YouTube key saved on this device' : 'YouTube key removed'); }}>
-        Save YouTube key
-      </button>
+      <div className="tiny">YouTube search is anonymous and does not need a YouTube API key or account.</div>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
         <b>Privacy & billing:</b> Keys are stored in this browser's local settings, not on an OWL server.
         Requests go directly from this device to Google. Gemini receives the SMS text or conversation
