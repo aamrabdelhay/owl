@@ -16,6 +16,7 @@ export function defaultSettings(now = Date.now()): Settings {
     geminiApiKey: '',
     youtubeApiKey: '',
     aiAutoReply: false,
+    aiAutoAnswer: false,
     userName: '',
     theme: 'owl-night',
     highContrast: false,
