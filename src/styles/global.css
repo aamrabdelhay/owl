@@ -1566,7 +1566,7 @@ body { height: 100vh; height: 100dvh; }
   height: auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
   gap: clamp(5px, 1vw, 12px);
   padding: clamp(4px, 1vw, 10px) clamp(2px, 1vw, 10px) 2px;
   border-top: 1px solid rgba(255,255,255,.1);
@@ -1594,6 +1594,7 @@ body { height: 100vh; height: 100dvh; }
   color: #ffe5a5;
 }
 .simpleKey b { font-family: var(--font-display); font-size: clamp(19px, 3.2vw, 36px); line-height: 1; }
+/* Classic 3×4 numeric keypad: 1–9, *, 0, #. */
 .simpleActions {
   grid-column: 1 / -1;
   min-height: clamp(26px, 4.2dvh, 38px);
