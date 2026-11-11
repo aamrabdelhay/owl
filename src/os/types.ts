@@ -13,6 +13,7 @@ export interface Settings {
   geminiApiKey: string;
   youtubeApiKey: string;
   aiAutoReply: boolean;
+  aiAutoAnswer: boolean;
   userName: string;
   theme: ThemeId;
   highContrast: boolean;
