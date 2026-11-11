@@ -32,7 +32,7 @@ export function Drawer() {
   const list = useMemo(() => {
     const base = APPS.filter((a) => !settings.hiddenApps.includes(a.id) && a.id !== 'snake' && a.id !== 'breaker'
       && a.id !== 'skyowl' && a.id !== 'pairs' && a.id !== 'mancala' && a.id !== 'sudoku'
-      && a.id !== 'blocks' && a.id !== 'wordowl' && a.id !== 'solitaire');
+      && a.id !== 'blocks' && a.id !== 'wordowl' && a.id !== 'solitaire' && a.id !== 'chess');
     const ordered = settings.appOrder.length
       ? [...base].sort((a, b) => {
         const ia = settings.appOrder.indexOf(a.id);
