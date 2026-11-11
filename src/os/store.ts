@@ -61,7 +61,7 @@ export function defaultSettings(now = Date.now()): Settings {
     powerSaver: false,
     bluetooth: true,
     wifiOnly: false,
-    onboarded: false,
+    onboarded: true,
     homePage: 'owl://home',
     installedAt: now,
   };
@@ -76,7 +76,9 @@ export function loadSettingsSync(): Settings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return defaultSettings();
     const parsed = JSON.parse(raw) as Partial<Settings>;
-    return deepMergeSettings(defaultSettings(), parsed);
+    // The setup takeover is intentionally removed; restore the handset
+    // directly and keep home-screen hotkeys enabled for existing installs.
+    return deepMergeSettings(defaultSettings(), { ...parsed, onboarded: true });
   } catch {
     return defaultSettings();
   }
