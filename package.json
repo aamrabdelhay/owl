@@ -16,6 +16,7 @@
     "check": "npm run typecheck && npm run build && npm run smoke && npm run test:api"
   },
   "dependencies": {
+    "chess.js": "^1.4.0",
     "@mozilla/readability": "^0.5.0",
     "idb-keyval": "^6.2.1",
     "jsmediatags": "^3.9.7",
