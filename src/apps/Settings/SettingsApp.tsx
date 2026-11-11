@@ -817,22 +817,47 @@ function AISettings() {
     <div style={{ padding: 8, display: 'grid', gap: 8 }}>
       <div className="fieldLabel">Google Gemini API key</div>
       <Field value={gemini} onChange={setGemini} kind="password" placeholder="Paste your Gemini API key" />
+      <button className="btn" onClick={async () => {
+        try {
+          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser. Use BlackBerry keyboard mode or paste into a supported field.');
+          const value = (await navigator.clipboard.readText()).trim();
+          if (!value) throw new Error('Clipboard is empty.');
+          setGemini(value);
+          toast('Gemini key pasted — press Save to keep it');
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Could not read clipboard');
+        }
+      }}>Paste Gemini key from clipboard</button>
       <button className="btn primary" onClick={() => { update({ geminiApiKey: gemini.trim() }); toast(gemini.trim() ? 'Gemini key saved on this device' : 'Gemini key removed'); }}>
         Save Gemini key
       </button>
       <button className={`chip ${settings.aiAutoReply ? 'on' : ''}`} onClick={() => update({ aiAutoReply: !settings.aiAutoReply })}>
         {settings.aiAutoReply ? '✓ AI SMS auto-replies enabled' : 'Enable AI SMS auto-replies'}
       </button>
+      <button className={`chip ${settings.aiAutoAnswer ? 'on' : ''}`} onClick={() => update({ aiAutoAnswer: !settings.aiAutoAnswer })}>
+        {settings.aiAutoAnswer ? '✓ Gemini auto-answers simulated calls' : 'Enable Gemini call auto-answer'}
+      </button>
       <div className="divider" />
       <div className="fieldLabel">YouTube Data API key</div>
       <Field value={youtube} onChange={setYoutube} kind="password" placeholder="Paste a YouTube Data API v3 key" />
+      <button className="btn" onClick={async () => {
+        try {
+          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser.');
+          const value = (await navigator.clipboard.readText()).trim();
+          if (!value) throw new Error('Clipboard is empty.');
+          setYoutube(value);
+          toast('YouTube key pasted — press Save to keep it');
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Could not read clipboard');
+        }
+      }}>Paste YouTube key from clipboard</button>
       <button className="btn" onClick={() => { update({ youtubeApiKey: youtube.trim() }); toast(youtube.trim() ? 'YouTube key saved on this device' : 'YouTube key removed'); }}>
         Save YouTube key
       </button>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
         <b>Privacy & billing:</b> Keys are stored in this browser's local settings, not on an OWL server.
         Requests go directly from this device to Google. Gemini receives the SMS text or conversation
-        prompt when AI is used. Protect your keys, restrict them in Google AI Studio / Cloud Console,
+        prompt when AI is used. AI auto-replies and call auto-answer are opt-in. Protect your keys, restrict them in Google AI Studio / Cloud Console,
         and review Google's own usage and billing limits.
       </div>
       <div className="tiny">
