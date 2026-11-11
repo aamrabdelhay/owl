@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Chess, type Square } from 'chess.mjs';
+import { Chess, type Square, type ChessInstance } from 'chess.mjs';
 import { useStore } from '../../os/store';
 import { GameShell, useScores, useGameSfx } from './gameKit';
 
@@ -17,7 +17,7 @@ function readUnlocked(): number {
   } catch { return 1; }
 }
 
-function evaluate(position: Chess, perspective: 'w' | 'b'): number {
+function evaluate(position: ChessInstance, perspective: 'w' | 'b'): number {
   let score = 0;
   const board = position.board();
   for (let row = 0; row < 8; row++) {
@@ -102,7 +102,7 @@ export default function ChessGame() {
   const statusText = thinking ? 'Computer is thinking…' : message;
   const board = game.board();
 
-  const completeMove = (current: Chess, from: Square, to: Square) => {
+  const completeMove = (current: ChessInstance, from: Square, to: Square) => {
     try {
       const move = current.move({ from, to, promotion: 'q' });
       if (!move) return false;
