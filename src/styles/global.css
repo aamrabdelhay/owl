@@ -1654,3 +1654,49 @@ body { height: 100vh; height: 100dvh; }
   .phoneTilt { transition: none !important; }
   .phoneInputArea .key, .simpleKey { transition: none !important; }
 }
+
+
+/* User-adjustable physical keyboard scale (0.70x–1.30x). */
+.phoneInputArea .navRow {
+  flex-basis: calc(clamp(38px, 8dvh, 66px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .navKey .navBadge {
+  font-size: calc(clamp(6px, .7vw, 9px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .trackpadWrap {
+  width: calc(clamp(40px, 7.5vw, 90px) * var(--owl-kb-scale, 1));
+  height: calc(clamp(34px, 6.6vw, 78px) * var(--owl-kb-scale, 1));
+  flex-basis: calc(clamp(40px, 7.5vw, 90px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .kb {
+  gap: calc(clamp(3px, .8dvh, 8px) * var(--owl-kb-scale, 1));
+  padding-top: calc(5px * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .kbRow { gap: calc(clamp(2px, .35vw, 5px) * var(--owl-kb-scale, 1)); }
+.phoneInputArea .key .legend b {
+  font-size: calc(clamp(9px, 1.15vw, 16px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .key .legend s {
+  font-size: calc(clamp(6px, .65vw, 9px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .navKey svg {
+  width: calc(clamp(15px, 2vw, 24px) * var(--owl-kb-scale, 1));
+  height: calc(clamp(15px, 2vw, 24px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .simpleKb {
+  gap: calc(clamp(5px, 1vw, 12px) * var(--owl-kb-scale, 1));
+  padding: calc(clamp(4px, 1vw, 10px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .simpleKey b {
+  font-size: calc(clamp(19px, 3.2vw, 36px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .simpleKey span {
+  font-size: calc(clamp(7px, 1vw, 12px) * var(--owl-kb-scale, 1));
+}
+.phoneInputArea .simpleActions { min-height: calc(clamp(26px, 4.2dvh, 38px) * var(--owl-kb-scale, 1)); }
+.phoneInputArea .simpleActions button {
+  font-size: calc(clamp(8px, .9vw, 12px) * var(--owl-kb-scale, 1));
+}
+@media (max-height: 560px) {
+  .phoneInputArea .navRow { flex-basis: calc(32px * var(--owl-kb-scale, 1)); }
+}
