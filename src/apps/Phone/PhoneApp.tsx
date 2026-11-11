@@ -9,28 +9,79 @@ import { formatDuration } from '../../hooks';
 import { Icon as I } from '../../components/Icon';
 import { errorBuzz, playRingtone, stopRingtone, vibrate } from '../../os/audio';
 import { registerAppKeys } from '../../os/kernel';
+import { Field } from '../../components/Field';
+import { askGemini } from '../../os/ai';
 
 type View = 'dial' | 'log' | 'contacts';
 
-export default function PhoneApp({ tab, number: initialNumber, activeCall }: { tab?: View; number?: string; activeCall?: boolean }) {
+export default function PhoneApp({ tab, number: initialNumber, activeCall, aiStart }: { tab?: View; number?: string; activeCall?: boolean; aiStart?: boolean }) {
   const [view, setView] = useState<View>(tab || 'dial');
   const [number, setNumber] = useState(initialNumber || '');
   const [callState, setCallState] = useState<'idle' | 'dialing' | 'active'>(activeCall ? 'active' : 'idle');
   const [callSeconds, setCallSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
   const [speaker, setSpeaker] = useState(false);
+  const [aiOpen, setAiOpen] = useState(!!aiStart);
+  const [aiDraft, setAiDraft] = useState('');
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
   const [log, setLog] = useCollection<CallLogEntry>(DB_KEYS.callLog);
   const [contacts] = useCollection<Contact>(DB_KEYS.contacts);
   const settings = useStore((s) => s.settings);
   const showDialog = useStore((s) => s.showDialog);
   const toast = useStore((s) => s.toast);
   const refreshCounters = useStore((s) => s.refreshCounters);
-  const timer = useRef<number | undefined>(undefined);
+const timer = useRef<number | undefined>(undefined);
+
+  const sendAiMessage = async (raw: string) => {
+    const text = raw.trim();
+    if (!text || aiBusy) return;
+    if (!settings.geminiApiKey) { toast('Add a Gemini API key in Settings → AI & online services'); return; }
+    const next = [...aiMessages, { role: 'user' as const, text }];
+    setAiMessages(next);
+    setAiDraft('');
+    setAiBusy(true);
+    try {
+      const answer = await askGemini(
+        settings.geminiApiKey,
+        next,
+        'You are the other person in a friendly, fictional phone conversation inside the OWL phone simulator. Reply naturally and briefly. This is a simulated conversation, not a real phone call.'
+      );
+      setAiMessages((prev) => [...prev, { role: 'model', text: answer }]);
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(answer)); } catch { /* voice is optional */ }
+      }
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Gemini call assistant failed');
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
+  const startAiSpeech = () => {
+    const Speech = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!Speech) { toast('Voice input is not supported here — type your message instead'); return; }
+    const recognition = new Speech();
+    recognition.lang = settings.language === 'ar' ? 'ar-EG' : 'en-US';
+    recognition.interimResults = false;
+    recognition.onresult = (event: any) => setAiDraft(String(event.results?.[0]?.[0]?.transcript || ''));
+    recognition.onerror = () => toast('Microphone input failed — check permission');
+    try { recognition.start(); } catch { toast('Could not start microphone'); }
+  };
+
 
   const known = useMemo(
     () => contacts.find((c) => c.phone.replace(/\s/g, '') === number.replace(/\s/g, '')),
     [contacts, number]
   );
+
+  useEffect(() => {
+    if (!aiStart || !settings.geminiApiKey) return;
+    setAiOpen(true);
+    void sendAiMessage('Please greet me briefly and start our simulated phone conversation.');
+    // This starts a local OWL AI conversation; no carrier call is placed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiStart]);
 
   useEffect(() => {
     if (callState !== 'active') return;
@@ -143,6 +194,29 @@ export default function PhoneApp({ tab, number: initialNumber, activeCall }: { t
               Speaker
             </button>
           </div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+            <button className={`btn ${aiOpen ? 'primary' : ''}`} onClick={() => setAiOpen((v) => !v)} disabled={!settings.geminiApiKey}>
+              AI assistant
+            </button>
+          </div>
+          {aiOpen && (
+            <div className="card" style={{ width: 'min(94%, 340px)', padding: 6, display: 'grid', gap: 4 }}>
+              <div className="tiny">Gemini conversation · simulated call only</div>
+              <div style={{ maxHeight: 92, overflow: 'auto', display: 'grid', gap: 3 }}>
+                {aiMessages.map((m, i) => (
+                  <div key={i} style={{ padding: '3px 5px', borderRadius: 5, fontSize: 9, background: m.role === 'user' ? 'var(--panel-2)' : 'var(--panel-3)', textAlign: m.role === 'user' ? 'right' : 'left' }}>
+                    {m.text}
+                  </div>
+                ))}
+                {aiBusy && <div className="tiny">Gemini is replying…</div>}
+              </div>
+              <Field value={aiDraft} onChange={setAiDraft} placeholder="Talk to the AI..." onSubmit={() => void sendAiMessage(aiDraft)} />
+              <div className="btnRow">
+                <button className="btn" onClick={startAiSpeech}>Speak</button>
+                <button className="btn primary" disabled={!aiDraft.trim() || aiBusy} onClick={() => void sendAiMessage(aiDraft)}>Send</button>
+              </div>
+            </div>
+          )}
         </div>
         <div style={{ padding: 8, display: 'flex', justifyContent: 'center' }}>
           <button
