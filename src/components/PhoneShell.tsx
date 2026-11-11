@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../os/store';
 import { OwlLogo } from './OwlLogo';
 import { Keyboard } from './Keyboard';
+import { SimpleKeyboard } from './SimpleKeyboard';
 import { Icon } from './Icon';
 import { keyClick, navBlip, vibrate } from '../os/audio';
 import type { KeyEventLike } from '../os/kernelTypes';
@@ -155,11 +156,7 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
       <div className="deskGlow" aria-hidden="true" />
       <div
         className="phoneTilt"
-        style={{
-          transform: settings.reduceMotion
-            ? 'none'
-            : `rotateY(${-4 + tilt.x}deg) rotateX(${1.2 - tilt.y}deg)`,
-        }}
+        style={{ transform: 'none' }}
       >
         <div className={`phone ${screen === 'boot' ? 'booting' : ''}`} data-trail={trail} role="application" aria-label="OWL phone simulator">
           {/* side keys */}
@@ -199,6 +196,7 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             onClick={() => useStore.getState().setSetting('profile', useStore.getState().settings.profile === 'silent' ? 'normal' : 'silent')}
           />
 
+          <div className="phoneDisplayArea">
           {/* forehead */}
           <div className="topBezel">
             <div className="earpiece" aria-label="Earpiece speaker">
@@ -213,7 +211,7 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
 
           {/* screen */}
           <div className="screenBezel">
-            <div className="screenClip">
+            <div className="screenClip" ref={screenRef}>
               <div
                 className="screenScale"
                 style={{ transform: `scale(${scale})` }}
@@ -224,6 +222,8 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             </div>
           </div>
 
+          </div>
+          <div className="phoneInputArea">
           {/* navigation row */}
           <div className="navRow">
             <button
@@ -293,7 +293,8 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
           </div>
 
           {/* keyboard */}
-          <Keyboard onKey={onKey} />
+          {settings.keyboardMode === 'simple' ? <SimpleKeyboard onKey={onKey} /> : <Keyboard onKey={onKey} />}
+          </div>
         </div>
       </div>
     </div>
