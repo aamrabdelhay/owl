@@ -12,6 +12,10 @@ const SETTINGS_KEY = 'owl:settings:v1';
 export function defaultSettings(now = Date.now()): Settings {
   return {
     language: 'en',
+    keyboardMode: 'blackberry',
+    geminiApiKey: '',
+    youtubeApiKey: '',
+    aiAutoReply: false,
     userName: '',
     theme: 'owl-night',
     highContrast: false,
