@@ -166,7 +166,7 @@ export default function YouTubeApp() {
           <div className="tiny" style={{ maxHeight: 44, overflow: 'auto', lineHeight: 1.4 }}>{selected.description}</div>
           <div className="btnRow">
             <button className="btn primary" onClick={() => window.open(`https://www.youtube.com/watch?v=${selected.id}`, '_blank', 'noopener,noreferrer')}>
-              <Icon name="external-link" size={10} /> Open on YouTube
+              <Icon name="globe" size={10} /> Open on YouTube
             </button>
             <button className="btn" onClick={() => { setSelected(null); setTab('search'); }}>Back to results</button>
           </div>
