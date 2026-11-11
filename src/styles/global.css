@@ -4,6 +4,9 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
+/* The colour of failure is never pure black: the page background always shows
+   the desk gradient, so a slow bundle looks like a dark room, not a dead screen. */
+html { background: #070d18; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {

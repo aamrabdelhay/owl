@@ -24,6 +24,12 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // Bump this on every release: a new cache name makes the new worker
+        // discard every asset from the previous deploy instead of mixing them.
+        cacheId: 'owl-v2',
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
