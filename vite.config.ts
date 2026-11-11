@@ -39,6 +39,8 @@ export default defineConfig({
   ],
   // The sandbox preview serves the app from *.e2b.app, so both the dev server
   // and `vite preview` must accept that host and bind to all interfaces.
+  // For the reader API in `npm run dev` use `vercel dev` (or deploy); this
+  // static dev server has no serverless runtime.
   server: { host: '0.0.0.0', port: 5173, strictPort: false, allowedHosts: true },
   preview: { host: '0.0.0.0', port: 4173, strictPort: false, allowedHosts: true },
   optimizeDeps: { exclude: ['jsmediatags'] },

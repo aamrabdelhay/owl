@@ -24,6 +24,73 @@ const RATE_WINDOW_MS = 60_000;
 
 const hits = new Map<string, { count: number; reset: number }>();
 
+/**
+ * DNS resolution happens here and nowhere else: the hostname is resolved before
+ * connecting, every returned address is checked, and the fetch is pinned to a
+ * validated IP. A hostname that resolves to a private address (or that changes
+ * between the check and the request) can never be reached.
+ */
+type Resolved = { address: string; family: number };
+
+async function resolveHost(hostname: string): Promise<Resolved[]> {
+  try {
+    const dns = await import('node:dns/promises');
+    return (await dns.lookup(hostname, { all: true, verbatim: true })) as Resolved[];
+  } catch {
+    return [];
+  }
+}
+
+/** Resolves a hostname and refuses it unless every address is public. */
+async function safeTarget(url: URL): Promise<{ url: URL; addresses: Resolved[] } | { error: string }> {
+  if (blockedHost(url.hostname)) return { error: 'Private addresses are blocked' };
+  // a bare IP literal is already covered by blockedHost
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(url.hostname)) return { url, addresses: [{ address: url.hostname, family: 4 }] };
+  const addresses = await resolveHost(url.hostname);
+  if (!addresses.length) return { error: 'That host could not be resolved' };
+  const bad = addresses.find((a) => isPrivateIp(a.address));
+  if (bad) return { error: 'Private addresses are blocked' };
+  return { url, addresses };
+}
+
+/** fetch() with a hard timeout that cannot be extended by a slow body. */
+async function fetchWithDeadline(url: string, init: RequestInit, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Reads at most `limit` bytes of a body, so a lying content-length cannot flood us. */
+async function readCapped(response: Response, limit: number): Promise<Uint8Array> {
+  const reader = response.body?.getReader();
+  if (!reader) return new Uint8Array(await response.arrayBuffer()).slice(0, limit);
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    const room = limit - total;
+    chunks.push(room >= value.length ? value : value.slice(0, room));
+    total += Math.min(room, value.length);
+    if (total >= limit) {
+      void reader.cancel().catch(() => undefined);
+      break;
+    }
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
 function limited(ip: string): boolean {
   const now = Date.now();
   const entry = hits.get(ip);
@@ -96,7 +163,7 @@ function escapeHtml(input: string): string {
   return input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function fallbackExtract(html: string): { title: string; content: string; excerpt: string } {
+export function fallbackExtract(html: string): { title: string; content: string; excerpt: string } {
   const title = decodeEntities((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').trim());
   const cleaned = html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -143,7 +210,7 @@ async function readableExtract(html: string, url: string): Promise<{ title: stri
   }
 }
 
-function sanitizeContent(content: string): string {
+export function sanitizeContent(content: string): string {
   let out = content
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -195,42 +262,42 @@ export default async function handler(req: any, res?: any): Promise<any> {
     return send(fail('Invalid URL'));
   }
   if (!['http:', 'https:'].includes(parsed.protocol)) return send(fail('Only http and https are allowed'));
-  if (blockedHost(parsed.hostname)) return send(fail('Private addresses are blocked'));
+  if (parsed.username || parsed.password) return send(fail('Credentials in the URL are not allowed'));
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const safe = await safeTarget(parsed);
+  if ('error' in safe) return send(fail(safe.error));
 
   try {
-    const upstream = await fetch(parsed.toString(), {
-      signal: controller.signal,
+    const upstream = await fetchWithDeadline(safe.url.toString(), {
       redirect: 'follow',
       headers: {
         'user-agent': 'OWLReader/1.0 (+https://github.com/aamrabdelhay/owl)',
         accept: 'text/html,application/xhtml+xml',
         'accept-language': 'en;q=0.9,ar;q=0.8',
+        // no cookies, no auth, no referer: the reader is anonymous
       },
-    });
+    }, TIMEOUT_MS);
 
     if (!upstream.ok) {
-      clearTimeout(timer);
       return send(fail(`Upstream responded ${upstream.status}`, 502));
     }
 
+    // Final URL after redirects must also be public, and is re-resolved.
     const finalUrl = upstream.url ? new URL(upstream.url) : parsed;
-    if (blockedHost(finalUrl.hostname)) {
-      clearTimeout(timer);
-      return send(fail('Redirect to a private address blocked'));
-    }
+    const finalSafe = await safeTarget(finalUrl);
+    if ('error' in finalSafe) return send(fail('Redirect to a private address blocked'));
 
     const contentType = upstream.headers.get('content-type') || '';
     if (!/text\/html|application\/xhtml/i.test(contentType)) {
-      clearTimeout(timer);
       return send(fail('Only HTML pages can be rendered in Reader mode', 415));
     }
 
-    const buffer = await upstream.arrayBuffer();
-    clearTimeout(timer);
-    const html = new TextDecoder('utf-8').decode(buffer.slice(0, MAX_BYTES));
+    const declared = Number(upstream.headers.get('content-length') || 0);
+    if (declared > MAX_BYTES) return send(fail('That page is larger than 2 MB', 413));
+
+    const bytes = await readCapped(upstream, MAX_BYTES);
+    if (bytes.length >= MAX_BYTES) return send(fail('That page is larger than 2 MB', 413));
+    const html = new TextDecoder('utf-8').decode(bytes);
 
     const readable = await readableExtract(html, finalUrl.toString());
     const base = readable
@@ -249,7 +316,6 @@ export default async function handler(req: any, res?: any): Promise<any> {
       content,
     }));
   } catch (err: any) {
-    clearTimeout(timer);
     const message = err?.name === 'AbortError'
       ? 'The page took too long to load (5s limit)'
       : 'Could not fetch that page';

@@ -165,7 +165,13 @@ npm run preview    # serve dist/ on :4173
 npm run typecheck  # tsc --noEmit
 npm run smoke      # headless boot test: opens every app in jsdom
 npm run icons      # regenerate public/pwa-*.png from public/owl-icon-*.svg
+npm run docs       # regenerate SOURCE.md (file tree + every file + deploy steps)
+npm run test:api   # SSRF-blocking + sanitiser tests for api/reader.ts
+npm run check      # typecheck + build + smoke + api tests, in one go
 ```
+
+`npm run dev` serves the static app only. Reader mode (`/api/reader`) needs the
+serverless runtime, so use `vercel dev` locally or the deployed URL.
 
 The first visit runs a short **setup wizard** (name, language, theme, security).
 You can re-run it any time from **Settings → About** or the Quick Help app.
