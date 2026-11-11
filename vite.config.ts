@@ -15,7 +15,7 @@ export default defineConfig({
         theme_color: '#0b1120',
         background_color: '#05070d',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'any',
         start_url: '/',
         icons: [
           { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
@@ -25,7 +25,7 @@ export default defineConfig({
       },
       workbox: {
         // Bump this on every release so clients cannot mix old and new assets.
-        cacheId: 'owl-v3',
+        cacheId: 'owl-v4',
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
