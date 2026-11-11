@@ -12,13 +12,14 @@ interface PhoneShellProps {
   onKey: (e: KeyEventLike) => boolean;
   screenRef: React.RefObject<HTMLDivElement>;
   scale: number;
+  screenWidth: number;
 }
 
 /**
  * The device: bezel, screen, navigation row with optical trackpad, full
  * laptop-layout QWERTY and side keys. Pure HTML/CSS/SVG.
  */
-export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProps) {
+export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: PhoneShellProps) {
   const settings = useStore((s) => s.settings);
   const toggleCaps = useStore((s) => s.toggleCaps);
   const setShift = useStore((s) => s.setShift);
@@ -217,7 +218,7 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             <div className="screenClip" ref={screenRef}>
               <div
                 className="screenScale"
-                style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
+                style={{ width: `${screenWidth}px`, transform: `translate(-50%, -50%) scale(${scale})` }}
               >
                 {children}
               </div>
