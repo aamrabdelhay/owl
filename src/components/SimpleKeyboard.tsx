@@ -13,18 +13,21 @@ const GROUPS: Record<string, string> = {
   '7': 'pqrs7',
   '8': 'tuv8',
   '9': 'wxyz9',
+  '*': '*+-/=',
 };
 const EMPTY = { shift: false, caps: false, ctrl: false, alt: false };
 
-/** Classic multi-tap twelve-key mobile keypad. */
+/** Nokia-style multi-tap 12-key keypad with long-press digit entry. */
 export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => boolean }) {
   const settings = useStore((s) => s.settings);
   const [pending, setPending] = useState<{ digit: string; index: number } | null>(null);
   const [upperCase, setUpperCase] = useState(false);
   const lastAt = useRef(0);
   const timer = useRef<number | undefined>(undefined);
+  const longPressTimer = useRef<number | undefined>(undefined);
+  const longPressed = useRef(false);
 
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  useEffect(() => () => { window.clearTimeout(timer.current); window.clearTimeout(longPressTimer.current); }, []);
 
   const dispatch = (key: string, code: string) => onKey({ key, code, dispatch: 'physical', ...EMPTY });
 
@@ -47,9 +50,16 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
       return;
     }
     if (digit === '*') {
-      setPending(null);
-      lastAt.current = 0;
-      dispatch('*', 'NumpadMultiply');
+      const symbols = GROUPS['*'];
+      const now = Date.now();
+      const same = pending?.digit === '*' && now - lastAt.current < 950;
+      const index = same ? (pending.index + 1) % symbols.length : 0;
+      if (same) dispatch('Backspace', 'Backspace');
+      dispatch(symbols[index], 'NumpadMultiply');
+      setPending({ digit: '*', index });
+      lastAt.current = now;
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => { setPending(null); lastAt.current = 0; }, 1000);
       return;
     }
     // The classic # key cycles lowercase / uppercase input modes.
@@ -81,6 +91,7 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
     { n: '1', letters: '.,?!' }, { n: '2', letters: 'ABC' }, { n: '3', letters: 'DEF' },
     { n: '4', letters: 'GHI' }, { n: '5', letters: 'JKL' }, { n: '6', letters: 'MNO' },
     { n: '7', letters: 'PQRS' }, { n: '8', letters: 'TUV' }, { n: '9', letters: 'WXYZ' },
+    { n: '*', letters: '* + -' }, { n: '0', letters: 'SPACE' }, { n: '#', letters: upperCase ? 'ABC' : 'abc' },
   ];
 
   return (
@@ -90,19 +101,33 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
           type="button"
           className={`simpleKey ${pending?.digit === key.n ? 'active' : ''}`}
           key={key.n}
-          onClick={() => tap(key.n)}
-          aria-label={`Key ${key.n} ${key.letters}`}
+          onPointerDown={() => {
+            longPressed.current = false;
+            window.clearTimeout(longPressTimer.current);
+            if (key.n !== '#') {
+              longPressTimer.current = window.setTimeout(() => {
+                longPressed.current = true;
+                setPending(null);
+                lastAt.current = 0;
+                dispatch(key.n, key.n === '*' ? 'NumpadMultiply' : `Digit${key.n}`);
+                if (settings.keyClick) keyClick(settings.keyClickVolume);
+                if (settings.vibrateKeys) vibrate(10);
+              }, 520);
+            }
+          }}
+          onPointerUp={() => window.clearTimeout(longPressTimer.current)}
+          onPointerLeave={() => window.clearTimeout(longPressTimer.current)}
+          onClick={() => {
+            if (longPressed.current) { longPressed.current = false; return; }
+            tap(key.n);
+          }}
+          aria-label={`Key ${key.n} ${key.letters}; hold for number`}
         >
           <b>{key.n}</b>
           <span>{key.letters}</span>
         </button>
       ))}
-      <div className="simpleActions">
-        <button type="button" onClick={() => tap('0')} aria-label="Zero">0</button>
-        <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch(' ', 'Space'); }}>SPACE</button>
-        <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch('Backspace', 'Backspace'); }}>⌫</button>
-        <button type="button" onClick={() => { setUpperCase((value) => !value); setPending(null); lastAt.current = 0; }}> {upperCase ? 'ABC' : 'abc'} </button>
-      </div>
+
     </div>
   );
 }
