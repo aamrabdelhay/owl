@@ -12,9 +12,7 @@ import { RecentApps } from './os/screens/RecentApps';
 import { dispatchKey, onKeyUp } from './os/kernel';
 import { describeKey } from './os/keys';
 import { keyClick, messageTone, unlockAudio, vibrate } from './os/audio';
-import { OwlLogo } from './components/OwlLogo';
 import { Icon } from './components/Icon';
-import { SHORTCUT_LEGEND } from './os/keys';
 import { openSetupIfNeeded } from './os/onboarding';
 import { useEffects } from './os/effects';
 import type { KeyEventLike } from './os/kernelTypes';
@@ -61,13 +59,16 @@ export default function App() {
       setScale(s);
     };
     measure();
-    const ro = new ResizeObserver(measure);
-    if (clipRef.current) ro.observe(clipRef.current);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (clipRef.current) ro?.observe(clipRef.current);
+    const viewport = window.visualViewport;
     window.addEventListener('resize', measure);
     window.addEventListener('orientationchange', measure);
+    viewport?.addEventListener('resize', measure);
     const t = window.setTimeout(measure, 60);
     return () => {
-      ro.disconnect();
+      ro?.disconnect();
+      viewport?.removeEventListener('resize', measure);
       window.removeEventListener('resize', measure);
       window.removeEventListener('orientationchange', measure);
       window.clearTimeout(t);
@@ -76,7 +77,7 @@ export default function App() {
 
   /* first-run wizard */
   useEffect(() => {
-    const t = window.setTimeout(() => openSetupIfNeeded(), 2800);
+    const t = window.setTimeout(() => openSetupIfNeeded(), 450);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -241,7 +242,6 @@ export default function App() {
 
   return (
     <div className="desk" dir={settings.language === 'ar' ? 'rtl' : 'ltr'}>
-      <DeskPanel />
       <PhoneShell onKey={handleKey} screenRef={clipRef} scale={scale}>
         <div
           className="screenRoot"
@@ -256,42 +256,6 @@ export default function App() {
           {screenContent}
         </div>
       </PhoneShell>
-    </div>
-  );
-}
-
-/* ------------------------------- desk panel ------------------------------- */
-
-function DeskPanel() {
-  const settings = useStore((s) => s.settings);
-  return (
-    <div className="helper">
-      <OwlLogo size={44} glow />
-      <h1 style={{ marginTop: 8 }}>OWL</h1>
-      <div className="tag">
-        A retro QWERTY phone that actually works. Boot it, browse the web, take notes, play
-        nine games — everything runs in your browser and stays on your device.
-      </div>
-      <details>
-        <summary>Keyboard shortcuts</summary>
-        <table>
-          <tbody>
-            {SHORTCUT_LEGEND.map(([k, d]) => (
-              <tr key={k}><td><kbd>{k}</kbd></td><td>{d}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
-      <div style={{ marginTop: 6 }}>
-        <a href="https://github.com/aamrabdelhay/owl" target="_blank" rel="noreferrer noopener">
-          <Icon name="globe" size={12} /> View the source on GitHub
-        </a>
-      </div>
-      <div className="legal">
-        Original device design, original sounds (all synthesised), no tracking, no cookies.
-        Calls and messages are simulated. Your files never leave this device.
-        <br />Theme: {settings.theme} · Profile: {settings.profile}
-      </div>
     </div>
   );
 }
@@ -371,6 +335,14 @@ function IncomingCallOverlay() {
           >
             Answer
           </button>
+          {useStore.getState().settings.geminiApiKey && (
+            <button className="btn" onClick={() => {
+              setCall(null);
+              openApp('phone', { number: call.number, activeCall: true, aiStart: true });
+            }}>
+              AI answer
+            </button>
+          )}
         </div>
       </div>
     </div>
