@@ -13,7 +13,6 @@ import { dispatchKey, onKeyUp } from './os/kernel';
 import { describeKey } from './os/keys';
 import { keyClick, messageTone, unlockAudio, vibrate } from './os/audio';
 import { Icon } from './components/Icon';
-import { openSetupIfNeeded } from './os/onboarding';
 import { useEffects } from './os/effects';
 import type { KeyEventLike } from './os/kernelTypes';
 
@@ -73,12 +72,6 @@ export default function App() {
       window.removeEventListener('orientationchange', measure);
       window.clearTimeout(t);
     };
-  }, []);
-
-  /* first-run wizard */
-  useEffect(() => {
-    const t = window.setTimeout(() => openSetupIfNeeded(), 450);
-    return () => window.clearTimeout(t);
   }, []);
 
   /* shutdown animation */
