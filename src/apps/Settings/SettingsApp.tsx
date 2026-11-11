@@ -4,7 +4,6 @@ import { AppFrame } from '../../components/Shell';
 import { Field } from '../../components/Field';
 import { Icon } from '../../components/Icon';
 import { dbEstimate, dbClear } from '../../os/db';
-import { hashPassword, randomSalt, verifyPassword } from '../../os/security';
 import { WALLPAPERS } from '../../assets/wallpapers';
 import { useWallpaperUrl, saveCustomWallpaper, cropToWallpaper } from '../../hooks/useWallpaper';
 import { RINGTONES, playRingtone, successChime } from '../../os/audio';
@@ -72,7 +71,6 @@ function Root({ onOpen }: { onOpen: (s: Section) => void }) {
     { id: 'wallpaper', label: 'Wallpaper', meta: s.wallpaperId.startsWith('custom:') ? 'Custom image' : 'Built-in', icon: 'image' },
     { id: 'themes', label: 'Themes', meta: s.theme, icon: 'palette' },
     { id: 'home', label: 'Home screen', meta: `${s.dockRows} row${s.dockRows === 'one' ? '' : 's'}`, icon: 'grid' },
-    { id: 'security', label: 'Security', meta: s.passwordHash ? 'Password set' : 'No password', icon: 'lock' },
     { id: 'datetime', label: 'Date & Time', meta: s.clock24 ? '24-hour' : '12-hour', icon: 'clock' },
     { id: 'language', label: 'Language', meta: s.language === 'ar' ? 'العربية' : 'English', icon: 'globe' },
     { id: 'battery', label: 'Battery', meta: s.powerSaver ? 'Power saver on' : 'Normal', icon: 'battery' },
@@ -123,6 +121,23 @@ function Display() {
       </div>
       <Slider label="Font size" value={s.fontScale} min={0.85} max={1.35} onChange={(v) => set('fontScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
       <Slider label="UI scale" value={s.uiScale} min={0.85} max={1.15} onChange={(v) => set('uiScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
+      <Slider
+        label="Phone display height"
+        value={s.screenShare}
+        min={32}
+        max={68}
+        onChange={(v) => set('screenShare', Math.round(v))}
+        format={(v) => `${Math.round(v)}%`}
+      />
+      <Slider
+        label="Keyboard size"
+        value={s.keyboardScale}
+        min={0.7}
+        max={1.3}
+        onChange={(v) => set('keyboardScale', v)}
+        format={(v) => `${Math.round(v * 100)}%`}
+      />
+      <div className="tiny">Move the split to give the display or keyboard more space. Keyboard scale changes the controls inside the lower half.</div>
       <div className="btnRow">
         <button className={`chip ${s.largeText ? 'on' : ''}`} onClick={() => set('largeText', !s.largeText)}>Large text</button>
         <button className={`chip ${s.highContrast ? 'on' : ''}`} onClick={() => set('highContrast', !s.highContrast)}>High contrast</button>
@@ -427,92 +442,12 @@ function HomeSection() {
 /* -------------------------------- Security ------------------------------- */
 
 function Security() {
-  const s = useStore((st) => st.settings);
-  const update = useStore((st) => st.updateSettings);
-  const toast = useStore((st) => st.toast);
-  const showDialog = useStore((st) => st.showDialog);
-  const lock = useStore((st) => st.lock);
-  const [oldPass, setOldPass] = useState('');
-  const [pass, setPass] = useState('');
-  const [pass2, setPass2] = useState('');
-  const [mode, setMode] = useState<'idle' | 'set' | 'change'>('idle');
-  const [error, setError] = useState('');
-
-  const savePassword = async () => {
-    if (mode === 'change') {
-      const ok = await verifyPassword(oldPass, s.passwordSalt, s.passwordHash);
-      if (!ok) { setError('Current password is wrong'); return; }
-    }
-    if (pass.length < 4) { setError('Use 4–12 characters'); return; }
-    if (pass.length > 12) { setError('Maximum 12 characters'); return; }
-    if (pass !== pass2) { setError('Passwords do not match'); return; }
-    const salt = randomSalt();
-    const hash = await hashPassword(pass, salt);
-    update({ passwordHash: hash, passwordSalt: salt, passwordIsPin: /^\d+$/.test(pass) });
-    setMode('idle');
-    setPass(''); setPass2(''); setOldPass(''); setError('');
-    successChime();
-    toast('Password saved (PBKDF2 hash)');
-  };
-
   return (
     <div style={{ padding: 8, display: 'grid', gap: 7 }}>
-      <div className="card" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <Icon name="shield" size={18} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700 }}>{s.passwordHash ? 'Keyboard is locked on boot' : 'No password set'}</div>
-          <div className="tiny">{s.passwordHash ? `Stored as a salted PBKDF2 hash${s.passwordIsPin ? ' (PIN)' : ''}` : 'Press End to lock at any time'}</div>
-        </div>
+      <div className="card">
+        <b>No password or login is enabled.</b>
+        <div className="tiny">OWL opens directly on this device. There is no account, PIN, or password prompt.</div>
       </div>
-
-      {(mode === 'set' || mode === 'change') ? (
-        <div style={{ display: 'grid', gap: 3 }}>
-          {mode === 'change' && (
-            <>
-              <div className="fieldLabel">Current password</div>
-              <Field value={oldPass} onChange={setOldPass} kind="password" placeholder="Current password" autoFocus maxLength={12} />
-            </>
-          )}
-          <div className="fieldLabel">New password or PIN (4–12)</div>
-          <Field value={pass} onChange={setPass} kind="password" placeholder="New password" autoFocus={mode === 'set'} maxLength={12} />
-          <Field value={pass2} onChange={setPass2} kind="password" placeholder="Repeat new password" maxLength={12} onSubmit={() => void savePassword()} />
-          {error && <div className="tiny" style={{ color: 'var(--red)' }}>{error}</div>}
-          <div className="btnRow">
-            <button className="btn" onClick={() => { setMode('idle'); setError(''); }}>Cancel</button>
-            <button className="btn primary" onClick={() => void savePassword()}>Save password</button>
-          </div>
-          <div className="tiny">5 wrong attempts trigger a 10-second cool-down. Forgot it? Reset OS (wipes data).</div>
-        </div>
-      ) : (
-        <div className="btnRow">
-          <button className="btn primary" onClick={() => setMode(s.passwordHash ? 'change' : 'set')}>
-            {s.passwordHash ? 'Change password' : 'Set password'}
-          </button>
-          {s.passwordHash && (
-            <button
-              className="btn danger"
-              onClick={() => showDialog({
-                title: 'Remove password?',
-                body: 'The lock screen will stop asking for a password.',
-                confirmLabel: 'Remove', danger: true,
-                onConfirm: () => { update({ passwordHash: '', passwordSalt: '', passwordIsPin: false }); toast('Password removed'); },
-              })}
-            >Remove password</button>
-          )}
-        </div>
-      )}
-
-      <div>
-        <div className="fieldLabel">Auto-lock</div>
-        <div className="btnRow">
-          {[30, 60, 120, 300, 0].map((v) => (
-            <button key={v} className={`chip ${s.autoLock === v ? 'on' : ''}`} onClick={() => update({ autoLock: v })}>
-              {v === 0 ? 'Never' : v < 60 ? `${v}s` : `${v / 60}m`}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button className="btn" onClick={lock}>Lock keyboard now</button>
     </div>
   );
 }
@@ -797,7 +732,7 @@ function KeyboardSettings() {
         <span className="meta">{mode === 'blackberry' ? 'Selected' : 'Full keyboard'}</span>
       </button>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
-        Classic mode uses multi-tap letters on the number keys (2=ABC, 3=DEF … 9=WXYZ).
+        Classic mode uses nine numbered multi-tap letter keys (1 punctuation, 2=ABC, 3=DEF … 9=WXYZ), with separate 0/space/delete controls.
         Tap the same key again quickly to cycle letters. In the Phone dialler the same
         keypad enters digits. BlackBerry mode keeps the full QWERTY layout.
       </div>
@@ -840,32 +775,14 @@ function AISettings() {
         {settings.aiAutoAnswer ? '✓ Gemini auto-answers simulated calls' : 'Enable Gemini call auto-answer'}
       </button>
       <div className="divider" />
-      <div className="fieldLabel">YouTube Data API key</div>
-      <Field value={youtube} onChange={setYoutube} kind="password" placeholder="Paste a YouTube Data API v3 key" />
-      <button className="btn" onClick={async () => {
-        try {
-          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser.');
-          const value = (await navigator.clipboard.readText()).trim();
-          if (!value) throw new Error('Clipboard is empty.');
-          setYoutube(value);
-          toast('YouTube key pasted — press Save to keep it');
-        } catch (error) {
-          toast(error instanceof Error ? error.message : 'Could not read clipboard');
-        }
-      }}>Paste YouTube key from clipboard</button>
-      <button className="btn" onClick={() => { update({ youtubeApiKey: youtube.trim() }); toast(youtube.trim() ? 'YouTube key saved on this device' : 'YouTube key removed'); }}>
-        Save YouTube key
-      </button>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
         <b>Privacy & billing:</b> Keys are stored in this browser's local settings, not on an OWL server.
         Requests go directly from this device to Google. Gemini receives the SMS text or conversation
-        prompt when AI is used. AI auto-replies and call auto-answer are opt-in. Protect your keys, restrict them in Google AI Studio / Cloud Console,
+        prompt when AI is used. Your Gemini key is also stored under a separate stable local key so ordinary app updates do not overwrite it. AI auto-replies and call auto-answer are opt-in. Protect your keys, restrict them in Google AI Studio / Cloud Console,
         and review Google's own usage and billing limits.
       </div>
       <div className="tiny">
-        YouTube search uses YouTube Data API v3 and needs its own Google Cloud key with the API enabled.
-        Public embeddable videos can play without signing in; some age-restricted or embedding-disabled
-        videos must open on YouTube instead.
+        YouTube search now uses a public no-key search service. Video playback uses the public YouTube player or an available privacy-friendly player. Some restricted videos may still be unavailable.
       </div>
     </div>
   );
