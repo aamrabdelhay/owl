@@ -116,10 +116,15 @@ export default function MessagesApp({ threadId }: { threadId?: string }) {
     }
     // Optional local AI auto-reply. This is a simulated recipient, not a real SMS network.
     if (settings.aiAutoReply && settings.geminiApiKey && address !== 'OWL') {
-      const context = messages.filter((m) => m.threadId === id).slice(-8);
+      const context = messages
+        .filter((m) => m.threadId === id)
+        .sort((a, b) => a.at - b.at)
+        .slice(-8)
+        .map((m) => `${m.direction === 'out' ? 'You' : 'Recipient'}: ${m.body}`)
+        .join('\n');
       void askGemini(
         settings.geminiApiKey,
-        [...context.map((m) => ({ role: m.direction === 'out' ? 'user' as const : 'model' as const, text: m.body })), { role: 'user' as const, text: body.trim() }],
+        [{ role: 'user', text: `Continue this fictional SMS conversation as the recipient.\n\nRecent conversation:\n${context}\n\nNew message to answer:\n${body.trim()}` }],
         'You are replying as the person receiving a simulated SMS on an old mobile phone. Keep replies natural, concise, and conversational. Never claim this is a real phone number or real carrier SMS.'
       ).then((answer) => {
         setMessages((prev) => [...prev, {
