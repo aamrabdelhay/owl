@@ -8,11 +8,13 @@ import { DB_KEYS, collectionGet, loadKey, saveKey, subscribeKey } from './db';
 import { audioContext, messageTone, playRingtone, stopRingtone, vibrate } from './audio';
 
 const SETTINGS_KEY = 'owl:settings:v1';
+const GEMINI_KEY_STORAGE = 'owl:gemini:api-key:v1';
 
 export function defaultSettings(now = Date.now()): Settings {
   return {
     language: 'en',
     keyboardMode: 'blackberry',
+    screenRatio: 0.56,
     geminiApiKey: '',
     youtubeApiKey: '',
     aiAutoReply: false,
@@ -57,7 +59,7 @@ export function defaultSettings(now = Date.now()): Settings {
     passwordHash: '',
     passwordSalt: '',
     passwordIsPin: false,
-    autoLock: 60,
+    autoLock: 0,
     powerSaver: false,
     bluetooth: true,
     wifiOnly: false,
@@ -76,9 +78,24 @@ export function loadSettingsSync(): Settings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return defaultSettings();
     const parsed = JSON.parse(raw) as Partial<Settings>;
-    // The setup takeover is intentionally removed; restore the handset
-    // directly and keep home-screen hotkeys enabled for existing installs.
-    return deepMergeSettings(defaultSettings(), { ...parsed, onboarded: true });
+    // Keep the Gemini credential in a dedicated localStorage slot so ordinary
+    // settings resets and app deployments do not overwrite it.
+    const savedGemini = localStorage.getItem(GEMINI_KEY_STORAGE) || parsed.geminiApiKey || '';
+    if (savedGemini && !localStorage.getItem(GEMINI_KEY_STORAGE)) {
+      localStorage.setItem(GEMINI_KEY_STORAGE, savedGemini);
+    }
+    // OWL no longer asks for a device password. Existing password hashes are
+    // cleared locally during this migration, and auto-lock is disabled.
+    return deepMergeSettings(defaultSettings(), {
+      ...parsed,
+      geminiApiKey: savedGemini,
+      screenRatio: Math.min(0.68, Math.max(0.42, Number(parsed.screenRatio) || 0.56)),
+      passwordHash: '',
+      passwordSalt: '',
+      passwordIsPin: false,
+      autoLock: 0,
+      onboarded: true,
+    });
   } catch {
     return defaultSettings();
   }
@@ -91,6 +108,7 @@ function persistSettings(settings: Settings) {
   saveTimer = window.setTimeout(() => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      if (settings.geminiApiKey) localStorage.setItem(GEMINI_KEY_STORAGE, settings.geminiApiKey);
     } catch { /* quota */ }
   }, 180);
 }
@@ -234,7 +252,7 @@ export const useStore = create<OwlStore>((set, get) => ({
     set({ powered: false, screen: 'off', drawerOpen: false, appId: null, appStack: [], softMenu: null, dialog: null });
   },
   powerOn: () => {
-    set({ powered: true, booting: true, bootProgress: 0, screen: 'boot', locked: true, appId: null, appStack: [] });
+    set({ powered: true, booting: true, bootProgress: 0, screen: 'boot', locked: false, appId: null, appStack: [] });
   },
   lock: () => {
     set({
@@ -247,27 +265,10 @@ export const useStore = create<OwlStore>((set, get) => ({
       activeFieldId: null,
     });
   },
-  unlock: async (password) => {
-    const { settings, failedAttempts, cooldownUntil } = get();
-    if (Date.now() < cooldownUntil) return false;
-    if (!settings.passwordHash) {
-      set({ locked: false, screen: get().appId ? 'app' : 'home', failedAttempts: 0 });
-      return true;
-    }
-    if (!password) return false;
-    const ok = await verifyPassword(password, settings.passwordSalt, settings.passwordHash);
-    if (ok) {
-      set({ locked: false, screen: 'home', failedAttempts: 0 });
-      return true;
-    }
-    const attempts = failedAttempts + 1;
-    if (attempts >= 5) {
-      set({ failedAttempts: 0, cooldownUntil: Date.now() + 10000 });
-    } else {
-      set({ failedAttempts: attempts });
-    }
-    return false;
-  },
+  unlock: async () => {
+    set({ locked: false, screen: get().appId ? 'app' : 'home', failedAttempts: 0, cooldownUntil: 0 });
+    return true;
+
 
   settings: initialSettings,
   updateSettings: (patch) =>
