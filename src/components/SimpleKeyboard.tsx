@@ -20,6 +20,7 @@ const EMPTY = { shift: false, caps: false, ctrl: false, alt: false };
 export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => boolean }) {
   const settings = useStore((s) => s.settings);
   const [pending, setPending] = useState<{ digit: string; index: number } | null>(null);
+  const [upperCase, setUpperCase] = useState(false);
   const lastAt = useRef(0);
   const timer = useRef<number | undefined>(undefined);
 
@@ -45,10 +46,17 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
       dispatch(' ', 'Space');
       return;
     }
-    if (digit === '*' || digit === '#') {
+    if (digit === '*') {
       setPending(null);
       lastAt.current = 0;
-      dispatch(digit, digit === '*' ? 'NumpadMultiply' : 'Digit3');
+      dispatch('*', 'NumpadMultiply');
+      return;
+    }
+    // The classic # key cycles lowercase / uppercase input modes.
+    if (digit === '#') {
+      setPending(null);
+      lastAt.current = 0;
+      setUpperCase((value) => !value);
       return;
     }
 
@@ -58,7 +66,8 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
     const sameKey = pending?.digit === digit && now - lastAt.current < 950;
     const index = sameKey ? (pending.index + 1) % chars.length : 0;
     if (sameKey) dispatch('Backspace', 'Backspace');
-    dispatch(chars[index], `Key${chars[index].toUpperCase()}`);
+    const letter = upperCase ? chars[index].toUpperCase() : chars[index];
+    dispatch(letter, `Key${letter.toUpperCase()}`);
     setPending({ digit, index });
     lastAt.current = now;
     window.clearTimeout(timer.current);
@@ -72,7 +81,7 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
     { n: '1', letters: '.,?!' }, { n: '2', letters: 'ABC' }, { n: '3', letters: 'DEF' },
     { n: '4', letters: 'GHI' }, { n: '5', letters: 'JKL' }, { n: '6', letters: 'MNO' },
     { n: '7', letters: 'PQRS' }, { n: '8', letters: 'TUV' }, { n: '9', letters: 'WXYZ' },
-    { n: '*', letters: '✳' }, { n: '0', letters: 'SPACE' }, { n: '#', letters: '#' },
+    { n: '*', letters: '✳' }, { n: '0', letters: 'SPACE' }, { n: '#', letters: upperCase ? 'ABC' : 'abc' },
   ];
 
   return (
@@ -89,7 +98,7 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
           <span>{key.letters}</span>
         </button>
       ))}
-      <div className="simpleKbHint">MULTI-TAP · 0 SPACE · * / #</div>
+      <div className="simpleKbHint">MULTI-TAP · # {upperCase ? 'ABC' : 'abc'} · 0 SPACE</div>
     </div>
   );
 }
