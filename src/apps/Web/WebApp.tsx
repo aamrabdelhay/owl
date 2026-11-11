@@ -14,7 +14,7 @@ type Phase = 'home' | 'results' | 'page' | 'reader';
 
 const HOME_PAGE = 'owl://home';
 
-export default function WebApp({ query: initialQuery }: { query?: string }) {
+export default function WebApp({ query: initialQuery, url: initialUrl }: { query?: string; url?: string }) {
   const settings = useStore((s) => s.settings);
   const toast = useStore((s) => s.toast);
   const showDialog = useStore((s) => s.showDialog);
@@ -43,13 +43,15 @@ export default function WebApp({ query: initialQuery }: { query?: string }) {
   const pageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (initialQuery) {
+    if (initialUrl) {
+      void openUrl(initialUrl);
+    } else if (initialQuery) {
       void runSearch(initialQuery);
     } else if (settings.homePage && settings.homePage !== HOME_PAGE && phase === 'home') {
       setAddress(settings.homePage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuery]);
+  }, [initialQuery, initialUrl]);
 
   const setUrl = useCallback((url: string, title = url) => {
     setTabs((prev) => prev.map((t, i) => {
