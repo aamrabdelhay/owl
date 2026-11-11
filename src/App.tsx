@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStore, profileVolume } from './os/store';
 import { StatusBar, DialogLayer, ToastStack, SoftMenuLayer } from './components/Shell';
 import { PhoneShell } from './components/PhoneShell';
@@ -48,8 +48,8 @@ export default function App() {
     document.title = 'OWL — Retro QWERTY Phone Simulator';
   }, [settings.theme, themePreview, settings.highContrast, settings.fontScale, settings.language]);
 
-  /* responsive screen scaling: measure the real clip box */
-  useEffect(() => {
+  /* responsive screen scaling: measure before the first visible paint */
+  useLayoutEffect(() => {
     const measure = () => {
       const el = clipRef.current;
       if (!el) return;
