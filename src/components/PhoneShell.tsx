@@ -214,7 +214,7 @@ export function PhoneShell({ children, onKey, screenRef, scale }: PhoneShellProp
             <div className="screenClip" ref={screenRef}>
               <div
                 className="screenScale"
-                style={{ transform: `scale(${scale})` }}
+                style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
               >
                 {children}
               </div>
