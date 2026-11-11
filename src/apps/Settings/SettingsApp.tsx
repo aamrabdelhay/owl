@@ -746,9 +746,7 @@ function AISettings() {
   const update = useStore((st) => st.updateSettings);
   const toast = useStore((st) => st.toast);
   const [gemini, setGemini] = useState(settings.geminiApiKey || '');
-  const [youtube, setYoutube] = useState(settings.youtubeApiKey || '');
   useEffect(() => setGemini(settings.geminiApiKey || ''), [settings.geminiApiKey]);
-  useEffect(() => setYoutube(settings.youtubeApiKey || ''), [settings.youtubeApiKey]);
 
   return (
     <div style={{ padding: 8, display: 'grid', gap: 8 }}>
