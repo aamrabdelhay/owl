@@ -735,9 +735,11 @@ function About() {
         <div className="tiny">OS 1.0 “Retro Edition”</div>
       </div>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
-        <b>Privacy:</b> Your files, photos, and passwords never leave your device. There is no
-        tracking, no analytics and no cookies. The only network call this app makes on its own is
-        the reader-mode proxy for pages you explicitly open.
+        <b>Privacy:</b> Your files, photos, notes, contacts, messages and passwords stay in this
+        browser on this device; OWL does not upload them to its own server. API keys are stored locally.
+        When you use Gemini, the message or call text you submit is sent directly to Google. YouTube
+        search terms are sent directly to YouTube. Opened websites also connect to their own services.
+        There is no OWL tracking, analytics or advertising cookie.
         <hr className="sep" />
         <b>Credits:</b> React, Vite, Zustand, idb-keyval, jsmediatags. Icons and device artwork are
         original. All sounds are synthesised with the Web Audio API.
