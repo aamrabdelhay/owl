@@ -60,7 +60,7 @@ export default function BreakerGame() {
           y: TOP + r * (BRICK_H + 3),
           w: bw - 2,
           h: BRICK_H,
-          hp: r < 1 && lvl > 1 ? 2 : 1,
+          hp: lvl > 1 && r < Math.min(5, Math.floor((lvl + 1) / 4)) ? 1 + Math.floor(lvl / 6) : 1,
           color: COLORS[(r + lvl) % COLORS.length],
           alive: true,
         });
@@ -270,7 +270,7 @@ export default function BreakerGame() {
 
         // level cleared?
         if (s.bricks.every((b) => !b.alive)) {
-          if (s.level >= 6) {
+          if (s.level >= 25) {
             setWon(true);
             setRunning(false);
             submit(s.score + 200);
@@ -278,7 +278,7 @@ export default function BreakerGame() {
           } else {
             s.level += 1;
             setLevel(s.level);
-            setStatus(`Level ${s.level}`);
+            setStatus(`Level ${s.level} / 25`);
             buildLevel(s.level);
             setRunning(false);
             sfx('win');
