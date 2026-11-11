@@ -30,6 +30,7 @@ export default function App() {
   const wallpaperVersion = useStore((s) => s.wallpaperVersion);
   const clipRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [screenWidth, setScreenWidth] = useState(SCREEN_W);
   const [shutdown, setShutdown] = useState(false);
   const lastAlive = useRef(Date.now());
 
@@ -54,8 +55,11 @@ export default function App() {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       if (!rect.width) return;
-      const s = Math.min(rect.width / SCREEN_W, rect.height / SCREEN_H);
+      // Keep the 360px logical height, but expand the logical width to the
+      // entire upper half of the viewport so the phone display uses 100% width.
+      const s = rect.height / SCREEN_H;
       setScale(s);
+      setScreenWidth(rect.width / s);
     };
     measure();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
@@ -235,7 +239,7 @@ export default function App() {
 
   return (
     <div className="desk" dir={settings.language === 'ar' ? 'rtl' : 'ltr'}>
-      <PhoneShell onKey={handleKey} screenRef={clipRef} scale={scale}>
+      <PhoneShell onKey={handleKey} screenRef={clipRef} scale={scale} screenWidth={screenWidth}>
         <div
           className="screenRoot"
           dir={settings.language === 'ar' ? 'rtl' : 'ltr'}
