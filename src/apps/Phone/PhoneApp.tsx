@@ -75,13 +75,16 @@ const timer = useRef<number | undefined>(undefined);
     [contacts, number]
   );
 
+  const aiIntroStarted = useRef(false);
   useEffect(() => {
-    if (!aiStart || !settings.geminiApiKey) return;
+    const shouldStart = Boolean(aiStart || settings.aiAutoAnswer);
+    if (callState !== 'active' || !shouldStart || !settings.geminiApiKey || aiIntroStarted.current) return;
+    aiIntroStarted.current = true;
     setAiOpen(true);
-    void sendAiMessage('Please greet me briefly and start our simulated phone conversation.');
-    // This starts a local OWL AI conversation; no carrier call is placed.
+    void sendAiMessage('You have answered a simulated phone call. Greet me naturally and begin a short, friendly conversation.');
+    // This is an OWL simulation; the browser does not place or answer carrier calls.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiStart]);
+  }, [callState, aiStart, settings.aiAutoAnswer, settings.geminiApiKey]);
 
   useEffect(() => {
     if (callState !== 'active') return;
