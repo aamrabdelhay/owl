@@ -203,7 +203,7 @@ export default function SkyOwlGame() {
         });
 
         // level up by score milestones even if no boss was reached
-        const newLevel = Math.max(s.level, Math.min(9, 1 + Math.floor(s.score / 180)));
+        const newLevel = Math.max(s.level, Math.min(25, 1 + Math.floor(s.score / 180)));
         if (newLevel !== s.level) {
           s.level = newLevel;
           setLevel(newLevel);
