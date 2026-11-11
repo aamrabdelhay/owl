@@ -4,7 +4,6 @@ import { AppFrame } from '../../components/Shell';
 import { Field } from '../../components/Field';
 import { Icon } from '../../components/Icon';
 import { dbEstimate, dbClear } from '../../os/db';
-import { hashPassword, randomSalt, verifyPassword } from '../../os/security';
 import { WALLPAPERS } from '../../assets/wallpapers';
 import { useWallpaperUrl, saveCustomWallpaper, cropToWallpaper } from '../../hooks/useWallpaper';
 import { RINGTONES, playRingtone, successChime } from '../../os/audio';
@@ -428,92 +427,18 @@ function HomeSection() {
 /* -------------------------------- Security ------------------------------- */
 
 function Security() {
-  const s = useStore((st) => st.settings);
-  const update = useStore((st) => st.updateSettings);
-  const toast = useStore((st) => st.toast);
-  const showDialog = useStore((st) => st.showDialog);
-  const lock = useStore((st) => st.lock);
-  const [oldPass, setOldPass] = useState('');
-  const [pass, setPass] = useState('');
-  const [pass2, setPass2] = useState('');
-  const [mode, setMode] = useState<'idle' | 'set' | 'change'>('idle');
-  const [error, setError] = useState('');
-
-  const savePassword = async () => {
-    if (mode === 'change') {
-      const ok = await verifyPassword(oldPass, s.passwordSalt, s.passwordHash);
-      if (!ok) { setError('Current password is wrong'); return; }
-    }
-    if (pass.length < 4) { setError('Use 4–12 characters'); return; }
-    if (pass.length > 12) { setError('Maximum 12 characters'); return; }
-    if (pass !== pass2) { setError('Passwords do not match'); return; }
-    const salt = randomSalt();
-    const hash = await hashPassword(pass, salt);
-    update({ passwordHash: hash, passwordSalt: salt, passwordIsPin: /^\d+$/.test(pass) });
-    setMode('idle');
-    setPass(''); setPass2(''); setOldPass(''); setError('');
-    successChime();
-    toast('Password saved (PBKDF2 hash)');
-  };
-
+  const settings = useStore((st) => st.settings);
   return (
     <div style={{ padding: 8, display: 'grid', gap: 7 }}>
-      <div className="card" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <div className="card" style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
         <Icon name="shield" size={18} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700 }}>{s.passwordHash ? 'Keyboard is locked on boot' : 'No password set'}</div>
-          <div className="tiny">{s.passwordHash ? `Stored as a salted PBKDF2 hash${s.passwordIsPin ? ' (PIN)' : ''}` : 'Press End to lock at any time'}</div>
+          <div style={{ fontSize: 11, fontWeight: 700 }}>Password protection is disabled</div>
+          <div className="tiny">OWL opens directly. No PIN or password is required after power-on.</div>
         </div>
       </div>
-
-      {(mode === 'set' || mode === 'change') ? (
-        <div style={{ display: 'grid', gap: 3 }}>
-          {mode === 'change' && (
-            <>
-              <div className="fieldLabel">Current password</div>
-              <Field value={oldPass} onChange={setOldPass} kind="password" placeholder="Current password" autoFocus maxLength={12} />
-            </>
-          )}
-          <div className="fieldLabel">New password or PIN (4–12)</div>
-          <Field value={pass} onChange={setPass} kind="password" placeholder="New password" autoFocus={mode === 'set'} maxLength={12} />
-          <Field value={pass2} onChange={setPass2} kind="password" placeholder="Repeat new password" maxLength={12} onSubmit={() => void savePassword()} />
-          {error && <div className="tiny" style={{ color: 'var(--red)' }}>{error}</div>}
-          <div className="btnRow">
-            <button className="btn" onClick={() => { setMode('idle'); setError(''); }}>Cancel</button>
-            <button className="btn primary" onClick={() => void savePassword()}>Save password</button>
-          </div>
-          <div className="tiny">5 wrong attempts trigger a 10-second cool-down. Forgot it? Reset OS (wipes data).</div>
-        </div>
-      ) : (
-        <div className="btnRow">
-          <button className="btn primary" onClick={() => setMode(s.passwordHash ? 'change' : 'set')}>
-            {s.passwordHash ? 'Change password' : 'Set password'}
-          </button>
-          {s.passwordHash && (
-            <button
-              className="btn danger"
-              onClick={() => showDialog({
-                title: 'Remove password?',
-                body: 'The lock screen will stop asking for a password.',
-                confirmLabel: 'Remove', danger: true,
-                onConfirm: () => { update({ passwordHash: '', passwordSalt: '', passwordIsPin: false }); toast('Password removed'); },
-              })}
-            >Remove password</button>
-          )}
-        </div>
-      )}
-
-      <div>
-        <div className="fieldLabel">Auto-lock</div>
-        <div className="btnRow">
-          {[30, 60, 120, 300, 0].map((v) => (
-            <button key={v} className={`chip ${s.autoLock === v ? 'on' : ''}`} onClick={() => update({ autoLock: v })}>
-              {v === 0 ? 'Never' : v < 60 ? `${v}s` : `${v / 60}m`}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button className="btn" onClick={lock}>Lock keyboard now</button>
+      <div className="tiny">Manual End-key screen locking remains optional, but it never asks for a password.</div>
+      <div className="kv"><b>Auto-lock</b><span>{settings.autoLock === 0 ? 'Off' : 'Off'}</span></div>
     </div>
   );
 }
@@ -812,9 +737,7 @@ function AISettings() {
   const update = useStore((st) => st.updateSettings);
   const toast = useStore((st) => st.toast);
   const [gemini, setGemini] = useState(settings.geminiApiKey || '');
-  const [youtube, setYoutube] = useState(settings.youtubeApiKey || '');
   useEffect(() => setGemini(settings.geminiApiKey || ''), [settings.geminiApiKey]);
-  useEffect(() => setYoutube(settings.youtubeApiKey || ''), [settings.youtubeApiKey]);
 
   return (
     <div style={{ padding: 8, display: 'grid', gap: 8 }}>
