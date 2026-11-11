@@ -65,8 +65,8 @@ const LABELS: Record<string, string> = {
 function Root({ onOpen }: { onOpen: (s: Section) => void }) {
   const s = useStore((state) => state.settings);
   const rows: { id: Section; label: string; meta: string; icon: string }[] = [
-    { id: 'keyboard', label: 'Keyboard mode', meta: s.keyboardMode === 'simple' ? 'Classic 12-key' : 'BlackBerry QWERTY', icon: 'keyboard' },
-    { id: 'ai', label: 'AI & online services', meta: s.geminiApiKey ? 'Gemini configured' : 'Set up Gemini / YouTube', icon: 'sparkles' },
+    { id: 'keyboard', label: 'Keyboard mode', meta: s.keyboardMode === 'simple' ? 'Classic 12-key' : 'BlackBerry QWERTY', icon: 'key' },
+    { id: 'ai', label: 'AI & online services', meta: s.geminiApiKey ? 'Gemini configured' : 'Set up Gemini / YouTube', icon: 'wand' },
     { id: 'display', label: 'Display', meta: `Brightness ${Math.round(s.brightness * 100)}%`, icon: 'sun' },
     { id: 'sound', label: 'Sound', meta: `${profileLabel(s.profile, s.language)}`, icon: 'volume' },
     { id: 'wallpaper', label: 'Wallpaper', meta: s.wallpaperId.startsWith('custom:') ? 'Custom image' : 'Built-in', icon: 'image' },
