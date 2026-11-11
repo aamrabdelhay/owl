@@ -290,7 +290,7 @@ export default function WebApp({ query: initialQuery }: { query?: string }) {
             <div className="fieldLabel">Quick search engines</div>
             <div className="btnRow">
               {SEARCH_ENGINES.map((e) => (
-                <button key={e.id} className="btn" onClick={() => { if (e.id === 'wikipedia') void runSearch(address || 'Owl'); else window.open(e.url(address || 'owl'), '_blank', 'noopener'); }}>
+                <button key={e.id} className="btn" onClick={() => { if (e.id === 'wikipedia') void runSearch(address || 'Owl'); else void openUrl(e.url(address || 'owl'), e.name); }}>
                   {e.name}
                 </button>
               ))}
@@ -330,7 +330,7 @@ export default function WebApp({ query: initialQuery }: { query?: string }) {
                 <div>No results from the free sources.</div>
                 <div className="btnRow" style={{ justifyContent: 'center', marginTop: 4 }}>
                   {SEARCH_ENGINES.map((e) => (
-                    <button key={e.id} className="btn" onClick={() => window.open(e.url(address), '_blank', 'noopener')}>{e.name}</button>
+                    <button key={e.id} className="btn" onClick={() => void openUrl(e.url(address), e.name)}>{e.name}</button>
                   ))}
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function WebApp({ query: initialQuery }: { query?: string }) {
                 {tab.url.replace(/^https?:\/\//, '')}
               </span>
               <button className="chip" onClick={() => void loadReader(tab.url)}>Reader</button>
-              <button className="chip" onClick={() => window.open(tab.url, '_blank', 'noopener,noreferrer')}>Open</button>
+              <button className="chip" onClick={() => { setFrameState('ok'); setPhase('page'); }}>Reload</button>
             </div>
             {frameState === 'blocked' ? (
               <div className="empty">
@@ -385,7 +385,7 @@ export default function WebApp({ query: initialQuery }: { query?: string }) {
                 <div>This site refuses to be embedded.</div>
                 <div className="btnRow" style={{ justifyContent: 'center' }}>
                   <button className="btn primary" onClick={() => void loadReader(tab.url)}>Try Reader mode</button>
-                  <button className="btn" onClick={() => window.open(tab.url, '_blank', 'noopener,noreferrer')}>Open in a new tab</button>
+                  <button className="btn" onClick={() => void loadReader(tab.url)}>Open in Reader</button>
                 </div>
               </div>
             ) : (
@@ -393,8 +393,8 @@ export default function WebApp({ query: initialQuery }: { query?: string }) {
                 key={tab.url}
                 src={tab.url}
                 title={tab.title}
-                sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-                referrerPolicy="no-referrer"
+                sandbox="allow-scripts allow-forms allow-same-origin"
+                referrerPolicy="strict-origin-when-cross-origin"
                 onLoad={onFrameLoad}
                 onError={() => { setFrameState('blocked'); void loadReader(tab.url); }}
                 style={{
@@ -436,7 +436,7 @@ export default function WebApp({ query: initialQuery }: { query?: string }) {
             />
             <div className="tiny" style={{ marginTop: 8, paddingTop: 5, borderTop: '1px solid var(--line)' }}>
               Sanitised by the OWL reader proxy · scripts removed
-              <button className="chip" style={{ marginLeft: 6 }} onClick={() => window.open(reader.url, '_blank', 'noopener,noreferrer')}>Original</button>
+              <button className="chip" style={{ marginLeft: 6 }} onClick={() => void openUrl(reader.url, reader.title)}>Open original inside Owl Web</button>
             </div>
           </div>
         )}
