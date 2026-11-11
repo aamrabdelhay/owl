@@ -76,23 +76,37 @@ function deepMergeSettings(base: Settings, patch: Partial<Settings>): Settings {
 export function loadSettingsSync(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return defaultSettings();
-    const parsed = JSON.parse(raw) as Partial<Settings>;
-    // The setup takeover is intentionally removed; restore the handset
-    // directly and keep home-screen hotkeys enabled for existing installs.
-    const savedGeminiKey = localStorage.getItem('owl:geminiApiKey:v1') || parsed.geminiApiKey || '';
-    return deepMergeSettings(defaultSettings(), {
+    const parsed = raw ? JSON.parse(raw) as Partial<Settings> : {};
+    const stableGeminiKey = localStorage.getItem('owl:geminiApiKey:v1');
+    const settings = deepMergeSettings(defaultSettings(), {
       ...parsed,
-      // OWL no longer uses a lock-screen password. Remove old hashes as well.
+      // OWL no longer uses a lock-screen password. Remove any legacy hash.
       passwordHash: '',
       passwordSalt: '',
       passwordIsPin: false,
       autoLock: 0,
-      geminiApiKey: savedGeminiKey,
+      // A present empty stable key means the user intentionally cleared it.
+      geminiApiKey: stableGeminiKey !== null ? stableGeminiKey : (parsed.geminiApiKey || ''),
       onboarded: true,
     });
+    // Migrate once now so old password hashes disappear from stored settings,
+    // and the API key survives future settings schema changes or deployments.
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    if (stableGeminiKey === null) {
+      localStorage.setItem('owl:geminiApiKey:v1', settings.geminiApiKey || '');
+    }
+    return settings;
   } catch {
-    return defaultSettings();
+    const settings = defaultSettings();
+    try {
+      settings.geminiApiKey = localStorage.getItem('owl:geminiApiKey:v1') || '';
+      settings.passwordHash = '';
+      settings.passwordSalt = '';
+      settings.passwordIsPin = false;
+      settings.autoLock = 0;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch { /* private browsing may block persistence */ }
+    return settings;
   }
 }
 
