@@ -8,7 +8,7 @@ const ROWS = 15;
 const CELL = 20;
 
 type Dir = 'up' | 'down' | 'left' | 'right';
-type Mode = 'classic' | 'maze' | 'daily';
+type Mode = 'classic' | 'maze' | 'infinity' | 'daily';
 interface Pt { x: number; y: number }
 
 const DIRS: Record<Dir, Pt> = {
@@ -77,7 +77,7 @@ function mazeName(level: number): string {
 
 function buildWalls(mode: Mode, level: number, wrap: boolean): Set<string> {
   const walls = new Set<string>();
-  if (mode === 'maze') {
+  if (mode === 'maze' || mode === 'infinity') {
     const maze = MAZES[level - 1];
     if (maze) {
       maze.walls.forEach((run) => run.forEach(([x, y]) => walls.add(`${x},${y}`)));
@@ -138,6 +138,7 @@ export default function SnakeGame() {
   const sfx = useGameSfx();
   const toast = useStore((s) => s.toast);
   const settings = useStore((s) => s.settings);
+  const setSetting = useStore((s) => s.setSetting);
 
   const game = useRef({
     snake: [{ x: 9, y: 7 }] as Pt[],
@@ -180,7 +181,7 @@ export default function SnakeGame() {
     g.snake = [{ x: 4, y: startY }, { x: 3, y: startY }];
     g.dir = 'right';
     g.queue = [];
-    g.walls = nextMode === 'daily' ? buildWalls(nextMode, nextLevel, wrapOverride) : buildWalls('maze', nextLevel, wrapOverride);
+    g.walls = nextMode === 'daily' ? buildWalls(nextMode, nextLevel, wrapOverride) : buildWalls(nextMode === 'infinity' ? 'infinity' : 'maze', nextLevel, wrapOverride);
     // Never place a new level barrier on the starting snake.
     g.snake.forEach((p) => g.walls.delete(`${p.x},${p.y}`));
     g.score = 0;
@@ -189,7 +190,7 @@ export default function SnakeGame() {
     g.boostUntil = 0;
     g.miceSpawned = 0;
     g.alive = true;
-    g.tickMs = Math.max(70, 240 - speed * 16 - (nextMode === 'daily' ? 0 : (nextLevel - 1) * 14));
+    g.tickMs = Math.max(nextMode === 'infinity' ? 45 : 70, 240 - speed * 16 - (nextMode === 'daily' ? 0 : (nextLevel - 1) * 14));
     g.lastTick = 0;
     setScore(0);
     setLevel(nextLevel);
@@ -200,7 +201,9 @@ export default function SnakeGame() {
     setReady(true);
     setStatus(nextMode === 'daily'
       ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}`
-      : `Level ${nextLevel}/10 · ${nextLevel * 400} to next`);
+      : nextMode === 'infinity'
+        ? `Infinity · Level ${nextLevel} · ${nextLevel * 400} to next`
+        : `Level ${nextLevel}/10 · ${nextLevel * 400} to next`);
     spawnMouse();
   }, [mode, wrap, speed, spawnMouse, settings.language]);
 
@@ -236,7 +239,7 @@ export default function SnakeGame() {
     let nx = head.x + delta.x;
     let ny = head.y + delta.y;
 
-    if (mode === 'classic' && wrap) {
+    if ((mode === 'classic' || mode === 'infinity') && wrap) {
       nx = (nx + COLS) % COLS;
       ny = (ny + ROWS) % ROWS;
     } else if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) {
@@ -266,25 +269,27 @@ export default function SnakeGame() {
       setScore(g.score);
       setMiceEaten(g.miceEaten);
       spawnMouse();
-      // Classic and Maze share a 10-stage campaign: every 400 points advances one level.
+      // Campaign ends after 10 levels; Infinity keeps generating harder levels forever.
       if (mode !== 'daily') {
-        if (g.score >= 4000) {
+        if (mode !== 'infinity' && g.score >= 4000) {
           sfx('win');
           die('Campaign complete! All 10 levels cleared.');
           return;
         }
-        const nextLevel = Math.min(10, Math.floor(g.score / 400) + 1);
+        const nextLevel = mode === 'infinity' ? Math.floor(g.score / 400) + 1 : Math.min(10, Math.floor(g.score / 400) + 1);
         if (nextLevel > g.level) {
           g.level = nextLevel;
-          g.walls = buildWalls('maze', nextLevel, wrap);
+          g.walls = buildWalls(mode === 'infinity' ? 'infinity' : 'maze', nextLevel, wrap);
           // Keep the current snake safe when the new obstacle layout appears.
           g.snake.forEach((p) => g.walls.delete(`${p.x},${p.y}`));
           g.miceEaten = 0;
-          g.tickMs = Math.max(70, 240 - speed * 16 - (nextLevel - 1) * 14);
+          g.tickMs = Math.max(mode === 'infinity' ? 45 : 70, 240 - speed * 16 - (nextLevel - 1) * 14);
           setLevel(nextLevel);
           setMiceEaten(0);
-          setStatus('Level ' + nextLevel + '/10 · ' + Math.max(0, nextLevel * 400 - g.score) + ' pts to next');
-          toast('Level ' + nextLevel + '/10 · Faster + new barriers');
+          setStatus(mode === 'infinity'
+            ? 'Infinity · Level ' + nextLevel + ' · ' + Math.max(0, nextLevel * 400 - g.score) + ' pts to next'
+            : 'Level ' + nextLevel + '/10 · ' + Math.max(0, nextLevel * 400 - g.score) + ' pts to next');
+          toast(mode === 'infinity' ? 'Infinity level ' + nextLevel + ' · Faster + new barriers' : 'Level ' + nextLevel + '/10 · Faster + new barriers');
           spawnMouse();
         }
       }
@@ -407,7 +412,7 @@ export default function SnakeGame() {
 
   const start = useCallback(() => {
     const g = game.current;
-    if (!g.alive) { reset(mode, 1, wrap); return; }
+    if (!g.alive) reset(mode, 1, wrap);
     setRunning(true);
     setReady(false);
     setPaused(false);
@@ -476,7 +481,13 @@ export default function SnakeGame() {
       onPause={pause}
       paused={paused}
       onRestart={() => reset(mode, 1, wrap)}
+      hideControls
     >
+      <div className="snakeTopActions" aria-label="Game actions">
+        <button className="snakeActionBtn" onClick={() => setPaused(true)} disabled={!running || paused}>PAUSE</button>
+        <button className="snakeActionBtn" onClick={() => reset(mode, 1, wrap)}>RESTART</button>
+        <button className="snakeActionBtn go" onClick={start} disabled={running && !paused}>GO</button>
+      </div>
       <div className="gameCanvasWrap">
         <canvas
           ref={canvasRef}
@@ -491,13 +502,13 @@ export default function SnakeGame() {
               Eat mice — every mouse adds a baby owlet behind you. Golden mice score 5× and speed you up.
               Avoid the walls and your own owlets.
             </div>
-            <div className="tiny">Use the compact controls below the screen to start and steer</div>
+            <div className="tiny">Use PAUSE, RESTART and GO above the board; steer with the controls below</div>
           </Overlay>
         )}
         {paused && !gameOver && (
           <Overlay>
             <div style={{ fontSize: 12, fontWeight: 700 }}>Paused</div>
-            <div className="tiny">Use RESUME or RESTART in the control strip below the screen</div>
+            <div className="tiny">Use GO to resume or RESTART to begin again</div>
           </Overlay>
         )}
         {gameOver && (
@@ -505,14 +516,14 @@ export default function SnakeGame() {
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, letterSpacing: '0.12em' }}>GAME OVER</div>
             <div style={{ fontSize: 12 }}>{status}</div>
             <div className="tiny">Score {score} · Owlets {Math.max(0, game.current.snake.length - 1)} · Best {Math.max(best, score)}</div>
-            <div className="tiny">Use RESTART below the screen to play again</div>
+            <div className="tiny">Use RESTART above the board to play again</div>
           </Overlay>
         )}
       </div>
       <div style={{ padding: '3px 5px', display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-        {(['classic', 'maze', 'daily'] as Mode[]).map((m) => (
+        {(['classic', 'maze', 'infinity', 'daily'] as Mode[]).map((m) => (
           <button key={m} className={`chip ${mode === m ? 'on' : ''}`} onClick={() => { setMode(m); }}>
-            {m === 'classic' ? 'Classic' : m === 'maze' ? `Maze ${level}` : 'Daily'}
+            {m === 'classic' ? 'Classic' : m === 'maze' ? `Maze ${level}` : m === 'infinity' ? 'Infinity' : 'Daily'}
           </button>
         ))}
         <span className="tiny">Speed</span>
@@ -521,7 +532,10 @@ export default function SnakeGame() {
         ))}
         <button className={`chip ${wrap ? 'on' : ''}`} onClick={() => setWrap((w) => !w)} title="Classic wrap-around">Wrap</button>
         <button className={`chip ${colorMode ? 'on' : ''}`} onClick={() => setColorMode((c) => !c)}>{colorMode ? 'Colour' : 'LCD'}</button>
-        {mode !== 'daily' && <span className="tiny">LEVEL {level}/10 · {level >= 10 ? 'FINAL STAGE' : `${Math.max(0, level * 400 - score)} pts to next`}</span>}
+        <label className="tiny snakePadSize">Pad {Math.round((settings.gamePadScale || 1) * 100)}%
+          <input aria-label="Game control size" type="range" min="70" max="130" step="5" value={Math.round((settings.gamePadScale || 1) * 100)} onChange={(e) => setSetting('gamePadScale', Number(e.target.value) / 100)} />
+        </label>
+        {mode !== 'daily' && <span className="tiny">{mode === 'infinity' ? `INFINITY · LEVEL ${level} · ${Math.max(0, level * 400 - score)} pts to next` : `LEVEL ${level}/10 · ${level >= 10 ? 'FINAL STAGE' : `${Math.max(0, level * 400 - score)} pts to next`}`}</span>}
         <span className="tiny" style={{ marginLeft: 'auto' }}>{miceEaten} mice</span>
       </div>
     </GameShell>

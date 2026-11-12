@@ -84,6 +84,7 @@ export function GameShell({
   paused,
   footer,
   onRestart,
+  hideControls = false,
 }: {
   title: string;
   score?: string | number;
@@ -94,6 +95,7 @@ export function GameShell({
   paused?: boolean;
   footer?: React.ReactNode;
   onRestart?: () => void;
+  hideControls?: boolean;
 }) {
   return (
     <div className="gameWrap">
@@ -102,11 +104,11 @@ export function GameShell({
         {score !== undefined && <span className="mono">Score {score}</span>}
         {best !== undefined && <span className="mono" style={{ color: 'var(--hl)' }}>Best {best}</span>}
         {status && <span className="tiny" style={{ marginLeft: 'auto' }}>{status}</span>}
-        <div style={{ marginLeft: status ? 0 : 'auto', display: 'flex', gap: 3 }}>
+        {!hideControls && <div style={{ marginLeft: status ? 0 : 'auto', display: 'flex', gap: 3 }}>
           {onRestart && <button className="iconBtn" onClick={onRestart} aria-label="Restart" style={{ width: 17, height: 17 }}><Icon name="repeat" size={8} /></button>}
           {onPause && <button className="iconBtn" onClick={onPause} aria-label="Pause" style={{ width: 17, height: 17 }}>{paused ? '▶' : '❚❚'}</button>}
           <button className="iconBtn" onClick={() => useStore.getState().closeApp()} aria-label="Exit game" style={{ width: 17, height: 17 }}>✕</button>
-        </div>
+        </div>}
       </div>
       {children}
       {footer && <div style={{ borderTop: '1px solid var(--line)', background: 'var(--panel)' }}>{footer}</div>}

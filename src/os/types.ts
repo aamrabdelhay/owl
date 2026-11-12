@@ -13,6 +13,7 @@ export interface Settings {
   keyboardLanguage: Lang;
   screenShare: number;
   keyboardScale: number;
+  gamePadScale: number;
   geminiApiKey: string;
   youtubeApiKey: string;
   aiAutoReply: boolean;

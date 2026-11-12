@@ -16,6 +16,7 @@ export function defaultSettings(now = Date.now()): Settings {
     keyboardLanguage: 'en',
     screenShare: 0.54,
     keyboardScale: 1,
+    gamePadScale: 1,
     geminiApiKey: '',
     youtubeApiKey: '',
     aiAutoReply: false,
