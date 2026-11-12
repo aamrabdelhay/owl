@@ -180,14 +180,16 @@ export default function SnakeGame() {
     g.snake = [{ x: 4, y: startY }, { x: 3, y: startY }];
     g.dir = 'right';
     g.queue = [];
-    g.walls = buildWalls(nextMode, nextLevel, wrapOverride);
+    g.walls = nextMode === 'daily' ? buildWalls(nextMode, nextLevel, wrapOverride) : buildWalls('maze', nextLevel, wrapOverride);
+    // Never place a new level barrier on the starting snake.
+    g.snake.forEach((p) => g.walls.delete(`${p.x},${p.y}`));
     g.score = 0;
     g.miceEaten = 0;
     g.level = nextLevel;
     g.boostUntil = 0;
     g.miceSpawned = 0;
     g.alive = true;
-    g.tickMs = 240 - speed * 16;
+    g.tickMs = Math.max(70, 240 - speed * 16 - (nextMode === 'daily' ? 0 : (nextLevel - 1) * 14));
     g.lastTick = 0;
     setScore(0);
     setLevel(nextLevel);
@@ -196,7 +198,9 @@ export default function SnakeGame() {
     setPaused(false);
     setRunning(false);
     setReady(true);
-    setStatus(nextMode === 'maze' ? `${mazeName(nextLevel)} · eat 6 mice` : nextMode === 'daily' ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}` : 'Classic');
+    setStatus(nextMode === 'daily'
+      ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}`
+      : `Level ${nextLevel}/10 · ${nextLevel * 400} to next`);
     spawnMouse();
   }, [mode, wrap, speed, spawnMouse, settings.language]);
 
@@ -262,21 +266,27 @@ export default function SnakeGame() {
       setScore(g.score);
       setMiceEaten(g.miceEaten);
       spawnMouse();
-      if (mode === 'maze' && g.miceEaten >= 6) {
-        if (g.level >= 30) {
+      // Classic and Maze share a 10-stage campaign: every 400 points advances one level.
+      if (mode !== 'daily') {
+        if (g.score >= 4000) {
           sfx('win');
-          die('Campaign complete!');
+          die('Campaign complete! All 10 levels cleared.');
           return;
         }
-        const nextLevel = g.level + 1;
-        g.level = nextLevel;
-        g.walls = buildWalls('maze', nextLevel, wrap);
-        g.miceEaten = 0;
-        setLevel(nextLevel);
-        setMiceEaten(0);
-        setStatus(`${mazeName(nextLevel)} · eat 6 mice`);
-        toast(`Level ${nextLevel}: ${mazeName(nextLevel)}`);
-        spawnMouse();
+        const nextLevel = Math.min(10, Math.floor(g.score / 400) + 1);
+        if (nextLevel > g.level) {
+          g.level = nextLevel;
+          g.walls = buildWalls('maze', nextLevel, wrap);
+          // Keep the current snake safe when the new obstacle layout appears.
+          g.snake.forEach((p) => g.walls.delete(`${p.x},${p.y}`));
+          g.miceEaten = 0;
+          g.tickMs = Math.max(70, 240 - speed * 16 - (nextLevel - 1) * 14);
+          setLevel(nextLevel);
+          setMiceEaten(0);
+          setStatus('Level ' + nextLevel + '/10 · ' + Math.max(0, nextLevel * 400 - g.score) + ' pts to next');
+          toast('Level ' + nextLevel + '/10 · Faster + new barriers');
+          spawnMouse();
+        }
       }
     }
   }, [mode, wrap, die, sfx, spawnMouse, toast]);
@@ -511,6 +521,7 @@ export default function SnakeGame() {
         ))}
         <button className={`chip ${wrap ? 'on' : ''}`} onClick={() => setWrap((w) => !w)} title="Classic wrap-around">Wrap</button>
         <button className={`chip ${colorMode ? 'on' : ''}`} onClick={() => setColorMode((c) => !c)}>{colorMode ? 'Colour' : 'LCD'}</button>
+        {mode !== 'daily' && <span className="tiny">LEVEL {level}/10 · {level >= 10 ? 'FINAL STAGE' : `${Math.max(0, level * 400 - score)} pts to next`}</span>}
         <span className="tiny" style={{ marginLeft: 'auto' }}>{miceEaten} mice</span>
       </div>
     </GameShell>
