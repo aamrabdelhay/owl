@@ -181,7 +181,7 @@ export default function SnakeGame() {
     g.snake = [{ x: 4, y: startY }, { x: 3, y: startY }];
     g.dir = 'right';
     g.queue = [];
-    g.walls = nextMode === 'daily' ? buildWalls(nextMode, nextLevel, wrapOverride) : buildWalls(nextMode === 'infinity' ? 'infinity' : 'maze', nextLevel, wrapOverride);
+    g.walls = nextMode === 'daily' ? buildWalls(nextMode, nextLevel, wrapOverride) : buildWalls('infinity', nextLevel, wrapOverride);
     // Never place a new level barrier on the starting snake.
     g.snake.forEach((p) => g.walls.delete(`${p.x},${p.y}`));
     g.score = 0;
@@ -202,8 +202,8 @@ export default function SnakeGame() {
     setStatus(nextMode === 'daily'
       ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}`
       : nextMode === 'infinity'
-        ? `Infinity · Level ${nextLevel} · ${nextLevel * 400} to next`
-        : `Level ${nextLevel}/10 · ${nextLevel * 400} to next`);
+        ? `Infinity · Level ${nextLevel} · ${nextLevel * 100} to next`
+        : `Level ${nextLevel}/10 · ${nextLevel * 100} to next`);
     spawnMouse();
   }, [mode, wrap, speed, spawnMouse, settings.language]);
 
@@ -269,17 +269,17 @@ export default function SnakeGame() {
       setScore(g.score);
       setMiceEaten(g.miceEaten);
       spawnMouse();
-      // Campaign ends after 10 levels; Infinity keeps generating harder levels forever.
+      // Every 100 points advances one level. Campaign ends after 10 levels; Infinity continues forever.
       if (mode !== 'daily') {
-        if (mode !== 'infinity' && g.score >= 4000) {
+        if (mode !== 'infinity' && g.score >= 1000) {
           sfx('win');
           die('Campaign complete! All 10 levels cleared.');
           return;
         }
-        const nextLevel = mode === 'infinity' ? Math.floor(g.score / 400) + 1 : Math.min(10, Math.floor(g.score / 400) + 1);
+        const nextLevel = mode === 'infinity' ? Math.floor(g.score / 100) + 1 : Math.min(10, Math.floor(g.score / 100) + 1);
         if (nextLevel > g.level) {
           g.level = nextLevel;
-          g.walls = buildWalls(mode === 'infinity' ? 'infinity' : 'maze', nextLevel, wrap);
+          g.walls = buildWalls('infinity', nextLevel, wrap);
           // Keep the current snake safe when the new obstacle layout appears.
           g.snake.forEach((p) => g.walls.delete(`${p.x},${p.y}`));
           g.miceEaten = 0;
@@ -287,8 +287,8 @@ export default function SnakeGame() {
           setLevel(nextLevel);
           setMiceEaten(0);
           setStatus(mode === 'infinity'
-            ? 'Infinity · Level ' + nextLevel + ' · ' + Math.max(0, nextLevel * 400 - g.score) + ' pts to next'
-            : 'Level ' + nextLevel + '/10 · ' + Math.max(0, nextLevel * 400 - g.score) + ' pts to next');
+            ? 'Infinity · Level ' + nextLevel + ' · ' + Math.max(0, nextLevel * 100 - g.score) + ' pts to next'
+            : 'Level ' + nextLevel + '/10 · ' + Math.max(0, nextLevel * 100 - g.score) + ' pts to next');
           toast(mode === 'infinity' ? 'Infinity level ' + nextLevel + ' · Faster + new barriers' : 'Level ' + nextLevel + '/10 · Faster + new barriers');
           spawnMouse();
         }
@@ -535,7 +535,7 @@ export default function SnakeGame() {
         <label className="tiny snakePadSize">Pad {Math.round((settings.gamePadScale || 1) * 100)}%
           <input aria-label="Game control size" type="range" min="70" max="130" step="5" value={Math.round((settings.gamePadScale || 1) * 100)} onChange={(e) => setSetting('gamePadScale', Number(e.target.value) / 100)} />
         </label>
-        {mode !== 'daily' && <span className="tiny">{mode === 'infinity' ? `INFINITY · LEVEL ${level} · ${Math.max(0, level * 400 - score)} pts to next` : `LEVEL ${level}/10 · ${level >= 10 ? 'FINAL STAGE' : `${Math.max(0, level * 400 - score)} pts to next`}`}</span>}
+        {mode !== 'daily' && <span className="tiny">{mode === 'infinity' ? `INFINITY · LEVEL ${level} · ${Math.max(0, level * 100 - score)} pts to next` : `LEVEL ${level}/10 · ${level >= 10 ? 'FINAL STAGE' : `${Math.max(0, level * 100 - score)} pts to next`}`}</span>}
         <span className="tiny" style={{ marginLeft: 'auto' }}>{miceEaten} mice</span>
       </div>
     </GameShell>
