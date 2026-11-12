@@ -1684,9 +1684,13 @@ html, body, #root { width:100%; min-width:0; min-height:100%; margin:0; }
   min-width:0 !important; min-height:0 !important; margin:0 !important;
   box-sizing:border-box !important; padding:max(3px,env(safe-area-inset-top)) 4px max(3px,env(safe-area-inset-bottom)) !important;
   display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
   grid-template-rows:minmax(0,var(--screen-share,54%)) minmax(0,1fr) !important;
+  justify-content:stretch !important; justify-items:stretch !important;
+  align-content:stretch !important; align-items:stretch !important;
   gap:0 !important; border-radius:clamp(0px,2.2vw,18px) !important; overflow:hidden !important;
 }
+.phoneDisplayArea, .phoneInputArea { width:100% !important; max-width:none !important; justify-self:stretch !important; }
 .phoneDisplayArea { min-height:0 !important; height:auto !important; overflow:hidden !important; }
 .phoneInputArea { min-height:0 !important; height:auto !important; overflow:hidden !important; padding:3px 4px max(3px,env(safe-area-inset-bottom)) !important; }
 .phoneInputArea .navRow { flex:0 0 clamp(42px,9%,68px) !important; min-height:36px !important; }
