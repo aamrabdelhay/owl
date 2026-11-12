@@ -1773,21 +1773,21 @@ html, body, #root { width:100%; min-width:0; min-height:100%; margin:0; }
   -webkit-user-select: none;
 }
 .gpActions {
-  flex: 0 0 clamp(26px, 5.5cqw, 34px);
-  width: min(100%, 260px);
+  flex: 0 0 clamp(42px, 7.5cqw, 54px);
+  width: min(100%, 360px);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: clamp(7px, 1.4cqw, 12px);
 }
 .gpBtn.gpUtility {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  padding: 0 5px;
-  border-radius: 7px;
-  font-size: clamp(8px, 2cqw, 11px);
+  padding: 0 8px;
+  border-radius: 9px;
+  font-size: clamp(11px, 2.8cqw, 15px);
   line-height: 1;
-  letter-spacing: .035em;
+  letter-spacing: .045em;
   white-space: nowrap;
 }
 .gpBtn.gpGo {
