@@ -4,8 +4,8 @@ import { useStore } from '../os/store';
 import { keyClick, vibrate } from '../os/audio';
 
 /**
- * Large touch controls that replace the keyboard while a game that asked for
- * them is open. Uses pointer-down so turns register instantly.
+ * Compact game controls live in the handset's keyboard area, never over the
+ * game board. Utility actions stay in a small toolbar; directions sit below.
  */
 export function GamePad({ pad }: { pad: GamePadSpec }) {
   const settings = useStore((s) => s.settings);
@@ -18,18 +18,23 @@ export function GamePad({ pad }: { pad: GamePadSpec }) {
   const noMenu = (e: React.SyntheticEvent) => e.preventDefault();
   return (
     <div className="gamePad" aria-label="Game controls" onContextMenu={noMenu}>
-      <div className="gpGrid">
-        <button className="gpBtn gpSide" onPointerDown={fire(() => pad.onPause?.())} aria-label={pad.pauseLabel || 'Pause'} disabled={!pad.onPause}>
+      <div className="gpActions">
+        <button className="gpBtn gpUtility" onPointerDown={fire(() => pad.onPause?.())} aria-label={pad.pauseLabel || 'Pause'} disabled={!pad.onPause}>
           {pad.pauseLabel || 'PAUSE'}
         </button>
-        <button className="gpBtn gpDir" onPointerDown={fire(() => pad.onDir('up'))} aria-label="Up">▲</button>
-        <button className="gpBtn gpSide" onPointerDown={fire(() => pad.onRestart?.())} aria-label="Restart" disabled={!pad.onRestart}>
+        <button className="gpBtn gpUtility" onPointerDown={fire(() => pad.onRestart?.())} aria-label="Restart" disabled={!pad.onRestart}>
           RESTART
         </button>
-        <button className="gpBtn gpDir" onPointerDown={fire(() => pad.onDir('left'))} aria-label="Left">◀</button>
-        <button className="gpBtn gpAction" onPointerDown={fire(() => pad.onAction())} aria-label={pad.actionLabel || 'Action'}>
+        <button className="gpBtn gpUtility gpGo" onPointerDown={fire(() => pad.onAction())} aria-label={pad.actionLabel || 'Action'}>
           {pad.actionLabel || 'OK'}
         </button>
+      </div>
+      <div className="gpControls" aria-label="Direction pad">
+        <span />
+        <button className="gpBtn gpDir" onPointerDown={fire(() => pad.onDir('up'))} aria-label="Up">▲</button>
+        <span />
+        <button className="gpBtn gpDir" onPointerDown={fire(() => pad.onDir('left'))} aria-label="Left">◀</button>
+        <span className="gpCenter" aria-hidden="true">OWL</span>
         <button className="gpBtn gpDir" onPointerDown={fire(() => pad.onDir('right'))} aria-label="Right">▶</button>
         <span />
         <button className="gpBtn gpDir" onPointerDown={fire(() => pad.onDir('down'))} aria-label="Down">▼</button>

@@ -1753,3 +1753,67 @@ html, body, #root { width:100%; min-width:0; min-height:100%; margin:0; }
 .gpDir { font-size: clamp(26px, 9vw, 56px); }
 .gpSide { font-size: clamp(9px, 2.4vw, 14px); }
 .gpAction { font-size: clamp(14px, 4vw, 24px); border-radius: 26%; background: linear-gradient(180deg, #3a4a2c, #1c2814); color: #cfe9a8; }
+
+
+/* Snake/game actions stay in a compact toolbar above the directional pad,
+   within the handset keyboard area and outside the game board. */
+.phoneInputArea .gamePad {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(5px, 1.2cqw, 10px);
+  padding: 5px 8px 7px;
+  box-sizing: border-box;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.gpActions {
+  flex: 0 0 clamp(26px, 5.5cqw, 34px);
+  width: min(100%, 260px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.gpBtn.gpUtility {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 0 5px;
+  border-radius: 7px;
+  font-size: clamp(8px, 2cqw, 11px);
+  line-height: 1;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.gpBtn.gpGo {
+  background: linear-gradient(180deg, #3a4a2c, #1c2814);
+  color: #cfe9a8;
+}
+.gpControls {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: min(100%, 180px);
+  max-height: 116px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+.gpControls .gpDir {
+  font-size: clamp(17px, 5cqw, 27px);
+  border-radius: 8px;
+}
+.gpCenter {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  opacity: .5;
+  font-size: 8px;
+  letter-spacing: .18em;
+  font-weight: 700;
+}
