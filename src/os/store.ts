@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type {
-  DialogSpec, Lang, ProfileId, Screen, Settings, SoftMenuSpec, ToastSpec, ThemeId, DockRows,
+  DialogSpec, GamePadSpec, Lang, ProfileId, Screen, Settings, SoftMenuSpec, ToastSpec, ThemeId, DockRows,
 } from './types';
 import { APP_MAP, DOCK_IDS } from './appRegistry';
 import { verifyPassword } from './security';
@@ -186,6 +186,9 @@ interface OwlStore {
   setSoftMenu: (s: SoftMenuSpec | null) => void;
   appMenu: SoftMenuSpec | null;
   setAppMenu: (s: SoftMenuSpec | null) => void;
+  /** Big on-screen game controls shown in the keyboard area while a game is open. */
+  gamePad: GamePadSpec | null;
+  setGamePad: (s: GamePadSpec | null) => void;
 
   /* runtime info */
   battery: BatteryState;
@@ -299,14 +302,14 @@ export const useStore = create<OwlStore>((set, get) => ({
       searchOpen: false,
       searchQuery: '',
       softMenu: null,
-      appMenu: null,
+      appMenu: null, gamePad: null,
       activeFieldId: null,
       recentApps: recent,
     });
     get().recordAppOpen(normalizedId);
   },
   closeApp: () =>
-    set({ appId: null, appParams: {}, appStack: [], screen: 'home', softMenu: null, appMenu: null, activeFieldId: null }),
+    set({ appId: null, appParams: {}, appStack: [], screen: 'home', softMenu: null, appMenu: null, gamePad: null, activeFieldId: null }),
   back: () => {
     const s = get();
     if (s.softMenu) { set({ softMenu: null }); return; }
@@ -325,7 +328,7 @@ export const useStore = create<OwlStore>((set, get) => ({
           appStack: s.appStack.slice(0, -1),
           screen: 'app',
           softMenu: null,
-          appMenu: null,
+          appMenu: null, gamePad: null,
           activeFieldId: null,
         });
       } else {
@@ -396,6 +399,8 @@ export const useStore = create<OwlStore>((set, get) => ({
   setSoftMenu: (s) => set({ softMenu: s, activeFieldId: null }),
   appMenu: null,
   setAppMenu: (s) => set({ appMenu: s }),
+  gamePad: null,
+  setGamePad: (s) => set({ gamePad: s }),
 
   battery: { level: 0.82, charging: false },
   setBattery: (b) => set({ battery: b }),

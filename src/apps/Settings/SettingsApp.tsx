@@ -726,8 +726,9 @@ function KeyboardSettings() {
         <span className="meta">{mode === 'blackberry' ? 'Selected' : 'Full keyboard'}</span>
       </button>
       <div className="fieldLabel">Screen / keyboard balance</div>
-      <Slider label="Screen height" value={current.screenShare} min={0.34} max={0.7} onChange={(v) => set('screenShare', v)} format={(v) => `${Math.round(v * 100)}%`} />
-      <Slider label="Keyboard size" value={current.keyboardScale} min={0.75} max={1.3} onChange={(v) => set('keyboardScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
+      <Slider label="Keyboard size" value={Math.round((1 - current.screenShare) * 100) / 100} min={0.25} max={0.7} onChange={(v) => set('screenShare', Math.round((1 - v) * 100) / 100)} format={(v) => `${Math.round(v * 100)}%`} />
+      <Slider label="Key label size" value={current.keyboardScale} min={0.75} max={1.5} onChange={(v) => set('keyboardScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
+      <div className="tiny">Tip: you can also drag the small bar between the screen and the keyboard to resize it anywhere.</div>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
         Classic mode uses the original phone keypad: nine letter-and-number keys (1–9), plus *, 0 and #. Press the same number repeatedly to cycle letters (2=ABC, 3=DEF … 9=WXYZ). In the Phone dialler, keys enter digits; 0 enters a space and # changes letter case.
       </div>

@@ -3,6 +3,7 @@ import { useStore } from '../os/store';
 import { OwlLogo } from './OwlLogo';
 import { Keyboard } from './Keyboard';
 import { SimpleKeyboard } from './SimpleKeyboard';
+import { GamePad } from './GamePad';
 import { Icon } from './Icon';
 import { keyClick, navBlip, vibrate } from '../os/audio';
 import type { KeyEventLike } from '../os/kernelTypes';
@@ -35,6 +36,10 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
   const appId = useStore((s) => s.appId);
   const setKeyPressed = useStore((s) => s.setKeyPressed);
   const pressed = useStore((s) => s.pressedCodes);
+  const gamePad = useStore((s) => s.gamePad);
+  const setSetting = useStore((s) => s.setSetting);
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const dragRaf = useRef(0);
 
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [trail, setTrail] = useState(0);
@@ -152,6 +157,26 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
 
   const navPress = (code: string, down: boolean) => setKeyPressed(code, down);
 
+  /* Drag the handle between screen and keyboard to resize the keyboard. */
+  const onSplitMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!(e.buttons & 1) && e.pointerType === 'mouse') return;
+    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    const el = phoneRef.current;
+    if (!el) return;
+    const y = e.clientY;
+    cancelAnimationFrame(dragRaf.current);
+    dragRaf.current = requestAnimationFrame(() => {
+      const rect = el.getBoundingClientRect();
+      const share = Math.max(0.3, Math.min(0.75, (y - rect.top) / rect.height));
+      setSetting('screenShare', Math.round(share * 100) / 100);
+    });
+  };
+  const nudgeSplit = (e: React.KeyboardEvent) => {
+    const cur = useStore.getState().settings.screenShare || 0.54;
+    if (e.key === 'ArrowUp') { e.preventDefault(); setSetting('screenShare', Math.max(0.3, Math.round((cur - 0.03) * 100) / 100)); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSetting('screenShare', Math.min(0.75, Math.round((cur + 0.03) * 100) / 100)); }
+  };
+
   return (
     <div className="phoneStage">
       <div className="deskGlow" aria-hidden="true" />
@@ -159,7 +184,7 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
         className="phoneTilt"
         style={{ transform: 'none' }}
       >
-        <div className={`phone ${screen === 'boot' ? 'booting' : ''}`} data-trail={trail} role="application" aria-label="OWL phone simulator" style={{ '--screen-share': `${Math.max(0.34, Math.min(0.7, settings.screenShare || 0.54)) * 100}%`, '--keyboard-scale': settings.keyboardScale || 1 } as React.CSSProperties}>
+        <div ref={phoneRef} className={`phone ${screen === 'boot' ? 'booting' : ''}`} data-trail={trail} role="application" aria-label="OWL phone simulator" style={{ '--screen-share': `${Math.max(0.3, Math.min(0.75, settings.screenShare || 0.54)) * 100}%`, '--keyboard-scale': settings.keyboardScale || 1 } as React.CSSProperties}>
           {/* side keys */}
           <button
             type="button"
@@ -297,8 +322,19 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
           </div>
 
           {/* keyboard */}
-          {settings.keyboardMode === 'simple' ? <SimpleKeyboard onKey={onKey} /> : <Keyboard onKey={onKey} />}
+          {gamePad ? <GamePad pad={gamePad} /> : settings.keyboardMode === 'simple' ? <SimpleKeyboard onKey={onKey} /> : <Keyboard onKey={onKey} />}
           </div>
+          <button
+            type="button"
+            className="splitHandle"
+            style={{ top: 'var(--screen-share)' }}
+            aria-label="Resize keyboard — drag up or down"
+            title="Drag to resize the keyboard"
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); }}
+            onPointerMove={onSplitMove}
+            onKeyDown={nudgeSplit}
+            onContextMenu={(e) => e.preventDefault()}
+          ><i /></button>
         </div>
       </div>
     </div>

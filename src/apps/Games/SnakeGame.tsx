@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../../os/store';
-import { GameShell, Overlay, DPad, useScores, useGameSfx, useGameKeys, drawOwl, drawMouse } from './gameKit';
+import { GameShell, Overlay, useScores, useGameSfx, useGameKeys, drawOwl, drawMouse } from './gameKit';
 import { formatDate } from '../../os/i18n';
 
 const COLS = 20;
@@ -439,6 +439,20 @@ export default function SnakeGame() {
     return () => useStore.getState().setAppMenu(null);
   }, [paused, colorMode, wrap, mode, pause, reset]);
 
+  /* big touch controls in the keyboard area while Snake is open */
+  useEffect(() => {
+    useStore.getState().setGamePad({
+      id: 'snake',
+      onDir: turn,
+      onAction: () => { if (gameOver) reset(mode, 1, wrap); else if (!running) start(); else pause(); },
+      actionLabel: gameOver ? 'AGAIN' : !running ? 'START' : paused ? 'GO' : 'PAUSE',
+      onPause: pause,
+      pauseLabel: paused ? 'RESUME' : 'PAUSE',
+      onRestart: () => reset(mode, 1, wrap),
+    });
+  }, [turn, gameOver, running, paused, mode, wrap, start, pause, reset]);
+  useEffect(() => () => useStore.getState().setGamePad(null), []);
+
   useEffect(() => () => useStore.getState().setAppMenu(null), []);
 
   const speedLabel = speed;
@@ -457,7 +471,7 @@ export default function SnakeGame() {
         <canvas
           ref={canvasRef}
           className="gameCanvas"
-          style={{ width: COLS * CELL, height: ROWS * CELL, maxWidth: '100%', maxHeight: '100%' }}
+          style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
           aria-label={`Owl Snake board. Score ${score}. ${status}`}
         />
         {ready && !gameOver && (
@@ -493,7 +507,6 @@ export default function SnakeGame() {
             </div>
           </Overlay>
         )}
-        <DPad onDir={turn} onAction={() => (gameOver ? reset(mode, 1, wrap) : start())} label="Snake direction pad" />
       </div>
       <div style={{ padding: '3px 5px', display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
         {(['classic', 'maze', 'daily'] as Mode[]).map((m) => (

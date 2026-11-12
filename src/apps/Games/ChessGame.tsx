@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AppFrame } from '../../components/Shell';
 
 type Piece = string | null;
@@ -86,41 +86,138 @@ function legal(pos:Position,r:number,c:number):Move[] {
 function allLegal(pos:Position):Move[] {
   const out:Move[]=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)out.push(...legal(pos,r,c));return out;
 }
+/* ------------------------------- computer player ------------------------------ */
+const VALUE: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+function evaluate(b: Board): number {
+  let score = 0;
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const p = b[r][c]; if (!p) continue;
+    const t = p.toLowerCase(), white = whitePiece(p);
+    let v = VALUE[t];
+    const centre = 3.5 - Math.max(Math.abs(r - 3.5), Math.abs(c - 3.5)); // 0..3
+    if (t === 'n' || t === 'b') v += centre * 8; else if (t === 'p') { v += centre * 3; v += (white ? 6 - r : r - 1) * 4; } else if (t === 'q') v += centre * 2;
+    score += white ? v : -v;
+  }
+  return score;
+}
+function pseudoAll(pos: Position): Move[] {
+  const out: Move[] = [];
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const p = pos.board[r][c];
+    if (p && whitePiece(p) === pos.white) out.push(...pseudo(pos, r, c));
+  }
+  return out;
+}
+const captureScore = (pos: Position, m: Move) => { const q = pos.board[m.to[0]][m.to[1]]; return q ? VALUE[q.toLowerCase()] * 10 - VALUE[(pos.board[m.from[0]][m.from[1]] as string).toLowerCase()] : 0; };
+/** Negamax with alpha-beta over pseudo-legal moves (king capture = huge score). Score is from the side to move. */
+function negamax(pos: Position, depth: number, alpha: number, beta: number): number {
+  if (depth === 0) return (pos.white ? 1 : -1) * evaluate(pos.board);
+  const moves = pseudoAll(pos).sort((a, b) => captureScore(pos, b) - captureScore(pos, a));
+  if (!moves.length) return 0;
+  let best = -Infinity;
+  for (const m of moves) {
+    const q = pos.board[m.to[0]][m.to[1]];
+    const score = q && q.toLowerCase() === 'k' ? 100000 + depth : -negamax(apply(pos, m), depth - 1, -beta, -alpha);
+    if (score > best) best = score;
+    if (best > alpha) alpha = best;
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+export const LEVELS = [
+  { id: 1, label: 'Beginner', depth: 0 },
+  { id: 2, label: 'Easy', depth: 1 },
+  { id: 3, label: 'Medium', depth: 2 },
+  { id: 4, label: 'Hard', depth: 3 },
+] as const;
+function chooseMove(pos: Position, level: number): Move | null {
+  const moves = allLegal(pos);
+  if (!moves.length) return null;
+  const depth = LEVELS.find((l) => l.id === level)?.depth ?? 1;
+  if (depth === 0) return moves[Math.floor(Math.random() * moves.length)];
+  let best: Move[] = [], bestScore = -Infinity;
+  for (const m of moves) {
+    const q = pos.board[m.to[0]][m.to[1]];
+    const next = apply(pos, m);
+    const score = q && q.toLowerCase() === 'k' ? 100000 : -negamax(next, depth - 1, -Infinity, Infinity);
+    if (score > bestScore + 0.001) { bestScore = score; best = [m]; } else if (Math.abs(score - bestScore) <= 0.001) best.push(m);
+  }
+  return best[Math.floor(Math.random() * best.length)];
+}
+
 export default function ChessGame(){
   const [pos,setPos]=useState<Position>(initial);
   const [past,setPast]=useState<Position[]>([]);
   const [selected,setSelected]=useState<[number,number]|null>(null);
+  const [vsComputer,setVsComputer]=useState(true);
+  const [level,setLevel]=useState(2);
+  const [thinking,setThinking]=useState(false);
+  const [last,setLast]=useState<Move|null>(null);
   const moves=useMemo(()=>selected?legal(pos,...selected):[],[pos,selected]);
   const targets=new Set(moves.map(m=>m.to.join(',')));
   const checked=inCheck(pos.board,pos.white);
   const remaining=useMemo(()=>allLegal(pos),[pos]);
   const ended=remaining.length===0;
-  const status=ended?(checked?(pos.white?'Black wins by checkmate':'White wins by checkmate'):'Draw by stalemate'):(checked?'Check!':pos.white?'White to move':'Black to move');
+  const computerTurn=vsComputer&&!pos.white&&!ended;
+  const status=ended?(checked?(pos.white?'Black wins — checkmate':'White wins — checkmate'):'Draw — stalemate'):thinking?'Thinking…':(checked?'Check!':vsComputer?(pos.white?'Your move (White)':'Computer…'):pos.white?'White to move':'Black to move');
+  const timer=useRef<number|undefined>(undefined);
+
+  /* computer replies as Black */
+  useEffect(()=>{
+    if(!computerTurn)return;
+    setThinking(true);
+    timer.current=window.setTimeout(()=>{
+      const m=chooseMove(pos,level);
+      setThinking(false);
+      if(m){setPast(v=>[...v,pos]);setPos(apply(pos,m));setLast(m);setSelected(null);}
+    },260);
+    return()=>{window.clearTimeout(timer.current);setThinking(false);};
+  },[computerTurn,pos,level]);
+
   const choose=(r:number,c:number)=>{
+    if(ended||computerTurn)return;
     const target=moves.find(m=>m.to[0]===r&&m.to[1]===c);
-    if(target){setPast(v=>[...v,pos]);setPos(apply(pos,target));setSelected(null);return;}
+    if(target){setPast(v=>[...v,pos]);setPos(apply(pos,target));setLast(target);setSelected(null);return;}
     const p=pos.board[r][c];if(p&&whitePiece(p)===pos.white)setSelected([r,c]);else setSelected(null);
   };
-  const reset=()=>{setPos(initial());setPast([]);setSelected(null);};
-  const undo=()=>{if(!past.length)return;setPos(past[past.length-1]);setPast(v=>v.slice(0,-1));setSelected(null);};
-  return <AppFrame title="Chess" icon="game" actions={<><button className="hbtn" onClick={undo} disabled={!past.length}>Undo</button><button className="hbtn" onClick={reset}>New</button></>}>
-    <div className="appBody" style={{padding:7,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
-      <div className="card" style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 8px'}}>
-        <b style={{fontSize:11}}>{status}</b><span className="tiny">{pos.history.length} moves</span>
+  const reset=()=>{window.clearTimeout(timer.current);setPos(initial());setPast([]);setSelected(null);setLast(null);};
+  const undo=()=>{
+    if(!past.length)return;
+    window.clearTimeout(timer.current);
+    // against the computer, take back both plies so it is your move again
+    const steps=vsComputer&&past.length>=2&&pos.white?2:1;
+    setPos(past[past.length-steps]);setPast(v=>v.slice(0,-steps));setSelected(null);setLast(null);
+  };
+  const setMode=(vs:boolean)=>{setVsComputer(vs);reset();};
+  const lastMove=pos.history[pos.history.length-1];
+
+  return <AppFrame title="Chess" icon="game" actions={<><button className="hbtn" onClick={undo} disabled={!past.length||thinking}>Undo</button><button className="hbtn" onClick={reset}>New</button></>}>
+    <div className="appBody" style={{padding:'4px 5px',display:'flex',flexDirection:'column',alignItems:'stretch',gap:4,overflow:'hidden'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,fontSize:11,lineHeight:1.1}}>
+        <b style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{status}</b>
+        <span className="tiny" style={{whiteSpace:'nowrap'}}>{lastMove?`${pos.history.length}. ${lastMove}`:'0 moves'}</span>
       </div>
-      <div style={{width:'min(100%, 310px)',display:'grid',gridTemplateColumns:'repeat(8,1fr)',border:'2px solid #8d7957',borderRadius:5,overflow:'hidden',boxShadow:'0 5px 15px #0007'}}>
-        {pos.board.map((row,r)=>row.map((piece,c)=>{
-          const light=(r+c)%2===0,chosen=selected?.[0]===r&&selected?.[1]===c,possible=targets.has(`${r},${c}`);
-          return <button key={r+'-'+c} onClick={()=>choose(r,c)} aria-label={`${String.fromCharCode(97+c)}${8-r} ${piece||'empty'}`} style={{aspectRatio:'1',minWidth:0,padding:0,border:0,position:'relative',display:'grid',placeItems:'center',background:chosen?'#d4a94d':light?'#e8dfc9':'#788b76',color:piece&&whitePiece(piece)?'#fff':'#17191c',textShadow:piece&&whitePiece(piece)?'0 1px 3px #222, 0 0 2px #222':'0 1px 1px #fff8',fontSize:'clamp(19px,6vw,34px)',lineHeight:1}}>
-            {piece&&GLYPHS[piece]}{possible&&<i style={{position:'absolute',width:piece?'85%':'24%',height:piece?'85%':'24%',borderRadius:'50%',border:'3px solid #e1aa36',background:piece?'transparent':'#e1aa3670'}}/>}
-          </button>;
-        }))}
+      <div style={{flex:'1 1 0',minHeight:0,display:'grid',placeItems:'center'}}>
+        <div style={{height:'100%',maxWidth:'100%',aspectRatio:'1',containerType:'inline-size',display:'grid',gridTemplateColumns:'repeat(8,minmax(0,1fr))',gridTemplateRows:'repeat(8,minmax(0,1fr))',border:'2px solid #8d7957',borderRadius:5,overflow:'hidden',boxShadow:'0 5px 15px #0007',boxSizing:'border-box'}}>
+          {pos.board.map((row,r)=>row.map((piece,c)=>{
+            const light=(r+c)%2===0,chosen=selected?.[0]===r&&selected?.[1]===c,possible=targets.has(`${r},${c}`);
+            const wasLast=!!last&&((last.from[0]===r&&last.from[1]===c)||(last.to[0]===r&&last.to[1]===c));
+            const kingInCheck=checked&&piece===(pos.white?'K':'k');
+            return <button key={r+'-'+c} onClick={()=>choose(r,c)} aria-label={`${String.fromCharCode(97+c)}${8-r} ${piece||'empty'}`} style={{minWidth:0,minHeight:0,padding:0,border:0,position:'relative',display:'grid',placeItems:'center',background:kingInCheck?'#c85a4a':chosen?'#d4a94d':wasLast?(light?'#e4d58f':'#a9b36a'):light?'#e8dfc9':'#788b76',color:piece&&whitePiece(piece)?'#fff':'#17191c',textShadow:piece&&whitePiece(piece)?'0 1px 3px #222, 0 0 2px #222':'0 1px 1px #fff8',fontSize:'10.5cqw',lineHeight:1}}>
+              {piece&&GLYPHS[piece]}{possible&&<i style={{position:'absolute',width:piece?'85%':'24%',height:piece?'85%':'24%',borderRadius:'50%',border:'3px solid #e1aa36',background:piece?'transparent':'#e1aa3670'}}/>}
+            </button>;
+          }))}
+        </div>
       </div>
-      <div className="card" style={{width:'100%',padding:6}}>
-        <div className="fieldLabel">Move history</div>
-        <div style={{display:'flex',gap:5,flexWrap:'wrap',fontSize:9,maxHeight:42,overflow:'auto'}}>{pos.history.slice(-12).map((m,i)=><span key={i} className="chip">{pos.history.length- Math.min(12,pos.history.length)+i+1}. {m}</span>)}</div>
+      <div style={{display:'flex',gap:3,alignItems:'center',flexWrap:'wrap'}}>
+        <button className={`chip ${!vsComputer?'on':''}`} onClick={()=>setMode(false)}>2 Players</button>
+        <button className={`chip ${vsComputer?'on':''}`} onClick={()=>setMode(true)}>vs Computer</button>
+        {vsComputer&&<>
+          <span className="tiny">Level</span>
+          {LEVELS.map(l=><button key={l.id} className={`chip ${level===l.id?'on':''}`} onClick={()=>setLevel(l.id)} title={l.label} style={{padding:'1px 5px'}}>{l.id}</button>)}
+          <span className="tiny">{LEVELS.find(l=>l.id===level)?.label}</span>
+        </>}
       </div>
-      <div className="tiny">Local two-player chess · legal moves · castling · en passant · automatic queen promotion.</div>
     </div>
   </AppFrame>;
 }

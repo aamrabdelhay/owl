@@ -28,7 +28,7 @@ export const GAMES: GameMeta[] = [
   { id: 'blocks', name: 'Block Stack', nameAr: 'مكعبات', icon: 'tetris', color: '#e0575b', blurb: 'Falling crates with ghost preview. Ten rows to a level.', keys: 'Arrows + Space' },
   { id: 'wordowl', name: 'Word Owl', nameAr: 'كلمة البومة', icon: 'word', color: '#e0b34b', blurb: 'Six guesses, two languages. English and Arabic dictionaries included.', keys: 'Type + Enter' },
   { id: 'solitaire', name: 'Solitaire', nameAr: 'سوليتير', icon: 'solitaire', color: '#3fa36b', blurb: 'Klondike with hints, auto-flip, and a saved game between visits.', keys: 'Arrows + Enter' },
-  { id: 'chess', name: 'Chess', nameAr: 'الشطرنج', icon: 'game', color: '#b58a48', blurb: 'Two-player chess with legal moves, check, checkmate, castling and promotion.', keys: 'Tap / click squares' },
+  { id: 'chess', name: 'Chess', nameAr: 'الشطرنج', icon: 'game', color: '#b58a48', blurb: 'Chess vs the computer (4 levels) or two players — legal moves, check, checkmate, castling and promotion.', keys: 'Tap / click squares' },
 ];
 
 export default function GamesHub({ view, game }: { view?: string; game?: string }) {

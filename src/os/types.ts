@@ -240,3 +240,14 @@ export interface BrowserHistory { id: string; title: string; url: string; at: nu
 export interface BrowserTab { id: string; title: string; url: string; historyIndex: number; history: string[] }
 
 export interface GameScore { game: string; score: number; extra?: string; at: number }
+
+/** Large touch controls a game can ask the shell to show in the keyboard area. */
+export interface GamePadSpec {
+  id: string;
+  onDir: (dir: 'up' | 'down' | 'left' | 'right') => void;
+  onAction: () => void;
+  actionLabel?: string;
+  onPause?: () => void;
+  pauseLabel?: string;
+  onRestart?: () => void;
+}
