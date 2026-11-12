@@ -116,7 +116,7 @@ export default function App() {
       }
       if (ev.code === 'F11' || ev.code === 'F12') return;
 
-      const desc = describeKey(ev, state.caps);
+      const desc = describeKey(ev, state.caps, state.settings.keyboardLanguage);
       if (!desc) return;
 
       if (desc.key === 'Shift') {
@@ -175,7 +175,7 @@ export default function App() {
         state.setAlt(false);
         state.setKeyPressed('AltLeft', false);
       }
-      const desc = describeKey(ev, state.caps);
+      const desc = describeKey(ev, state.caps, state.settings.keyboardLanguage);
       if (desc && desc.kind === 'char' && !ev.ctrlKey && !ev.altKey) {
         onKeyUp({ key: ev.key.length === 1 ? ev.key.toLowerCase() : '', code: ev.code });
       }

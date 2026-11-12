@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../os/store';
-import { KEY_ROWS, type KeyDef } from '../os/keys';
+import { ARABIC_LAYOUT, KEY_ROWS, type KeyDef } from '../os/keys';
 import { keyClick, vibrate } from '../os/audio';
 
 interface KbProps {
@@ -30,8 +30,9 @@ export function Keyboard({ onKey }: KbProps) {
         (e.currentTarget as HTMLButtonElement).setPointerCapture?.(e.pointerId);
         if (def.kind === 'char' || def.kind === 'nav' || def.kind === 'action') {
           const rect = e.currentTarget.getBoundingClientRect();
+          const state = useStore.getState();
           const label = def.kind === 'char'
-            ? legendFor(def, useStore.getState().shift, useStore.getState().caps)
+            ? legendFor(def, state.shift, state.caps, state.settings.keyboardLanguage)
             : def.label || '';
           setBubble({ label, x: rect.left + rect.width / 2, y: rect.top });
         }
@@ -41,7 +42,7 @@ export function Keyboard({ onKey }: KbProps) {
         const s = useStore.getState();
         let keyValue = '';
         if (def.kind === 'char') {
-          keyValue = legendFor(def, s.shift, s.caps);
+          keyValue = legendFor(def, s.shift, s.caps, s.settings.keyboardLanguage);
           if (s.shift) s.setShift(false);
         } else if (def.kind === 'nav') {
           keyValue = def.code;
@@ -101,7 +102,7 @@ export function Keyboard({ onKey }: KbProps) {
                 <span className="legend">
                   {def.kind === 'char' && def.label ? (
                     <>
-                      <b>{displayLegend(def, shift, caps)}</b>
+                      <b>{displayLegend(def, shift, caps, settings.keyboardLanguage)}</b>
                       {def.legend && <s>{shift ? def.label : def.legend}</s>}
                     </>
                   ) : (
@@ -127,7 +128,8 @@ export function Keyboard({ onKey }: KbProps) {
   );
 }
 
-function displayLegend(def: KeyDef, shift: boolean, caps: boolean): string {
+function displayLegend(def: KeyDef, shift: boolean, caps: boolean, language: 'en' | 'ar'): string {
+  if (language === 'ar' && ARABIC_LAYOUT[def.code]) return ARABIC_LAYOUT[def.code];
   if (def.label && def.label.length === 1 && /[a-z]/i.test(def.label)) {
     const letter = def.label.toUpperCase();
     return shift !== caps ? letter : letter.toLowerCase();
@@ -140,7 +142,8 @@ function displayLegend(def: KeyDef, shift: boolean, caps: boolean): string {
   return def.label || '';
 }
 
-function legendFor(def: KeyDef, shift: boolean, caps: boolean): string {
+function legendFor(def: KeyDef, shift: boolean, caps: boolean, language: 'en' | 'ar'): string {
+  if (language === 'ar' && ARABIC_LAYOUT[def.code]) return ARABIC_LAYOUT[def.code];
   if (def.kind !== 'char') return def.code;
   if (def.code === 'Space') return ' ';
   if (def.label && def.label.length === 1 && /[a-z]/i.test(def.label)) {

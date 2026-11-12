@@ -32,6 +32,16 @@ const K = (code: string, label: string, width: number, kind: KeyKind, legend?: s
   code, label, width, kind, legend, aria: aria || label, icon,
 });
 
+/** Standard Arabic 101 keyboard mapping, keyed by physical key code. */
+export const ARABIC_LAYOUT: Record<string, string> = {
+  KeyQ: 'ض', KeyW: 'ص', KeyE: 'ث', KeyR: 'ق', KeyT: 'ف', KeyY: 'غ', KeyU: 'ع', KeyI: 'ه', KeyO: 'خ', KeyP: 'ح',
+  BracketLeft: 'ج', BracketRight: 'د',
+  KeyA: 'ش', KeyS: 'س', KeyD: 'ي', KeyF: 'ب', KeyG: 'ل', KeyH: 'ا', KeyJ: 'ت', KeyK: 'ن', KeyL: 'م',
+  Semicolon: 'ك', Quote: 'ط',
+  KeyZ: 'ئ', KeyX: 'ء', KeyC: 'ؤ', KeyV: 'ر', KeyB: 'لا', KeyN: 'ى', KeyM: 'ة',
+  Comma: 'و', Period: 'ز', Slash: 'ظ',
+};
+
 export const KEY_ROWS: KeyDef[][] = [
   [
     K('Escape', 'Esc', 1.25, 'action', undefined, 'Escape / Back'),
@@ -126,7 +136,7 @@ const NUMPAD_CHARS: Record<string, string> = {
 };
 
 /** Map a DOM KeyboardEvent to an OWL key descriptor, or null when not consumed. */
-export function describeKey(e: KeyboardEvent, caps: boolean): KeyDescriptor | null {
+export function describeKey(e: KeyboardEvent, caps: boolean, language: 'en' | 'ar' = 'en'): KeyDescriptor | null {
   const code = e.code;
   const shift = e.shiftKey;
   const ctrl = e.ctrlKey;
@@ -134,6 +144,9 @@ export function describeKey(e: KeyboardEvent, caps: boolean): KeyDescriptor | nu
 
   const base = { code, shift, caps, ctrl, alt, repeat: e.repeat } as KeyDescriptor;
 
+  if (language === 'ar' && ARABIC_LAYOUT[code]) {
+    return { ...base, key: ARABIC_LAYOUT[code], kind: 'char' };
+  }
   if (/^Key[A-Z]$/.test(code)) {
     const letter = code.slice(3);
     const upper = shift !== caps; // XOR

@@ -13,6 +13,7 @@ export function defaultSettings(now = Date.now()): Settings {
   return {
     language: 'en',
     keyboardMode: 'simple',
+    keyboardLanguage: 'en',
     screenShare: 0.54,
     keyboardScale: 1,
     geminiApiKey: '',

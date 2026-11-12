@@ -338,7 +338,7 @@ export function dispatchKey(e: KeyEventLike): boolean {
   }
 
   // printable character
-  if (e.key.length === 1) {
+  if (e.key.length > 0) {
     // Typing another character means the user is searching, not holding a
     // letter to launch its hotkey. Key repeats of the held letter keep it alive.
     if (holdLetter !== null && !e.repeat) {

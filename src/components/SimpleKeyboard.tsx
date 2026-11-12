@@ -14,6 +14,10 @@ const GROUPS: Record<string, string> = {
   '8': 'tuv8',
   '9': 'wxyz9',
 };
+const AR_GROUPS: Record<string, string> = {
+  '1': '.,؟!١', '2': 'ابتث', '3': 'جحخد', '4': 'ذرزس', '5': 'شصضط',
+  '6': 'ظعغف', '7': 'قكلم', '8': 'نهوي', '9': 'ةىءئ',
+};
 const EMPTY = { shift: false, caps: false, ctrl: false, alt: false };
 
 /** Classic multi-tap twelve-key mobile keypad. */
@@ -60,14 +64,15 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
       return;
     }
 
-    const chars = GROUPS[digit];
+    const groups = settings.keyboardLanguage === 'ar' ? AR_GROUPS : GROUPS;
+    const chars = groups[digit];
     if (!chars) return;
     const now = Date.now();
     const sameKey = pending?.digit === digit && now - lastAt.current < 950;
     const index = sameKey ? (pending.index + 1) % chars.length : 0;
     if (sameKey) dispatch('Backspace', 'Backspace');
-    const letter = upperCase ? chars[index].toUpperCase() : chars[index];
-    dispatch(letter, `Key${letter.toUpperCase()}`);
+    const letter = settings.keyboardLanguage === 'ar' ? chars[index] : upperCase ? chars[index].toUpperCase() : chars[index];
+    dispatch(letter, settings.keyboardLanguage === 'ar' ? `Digit${digit}` : `Key${letter.toUpperCase()}`);
     setPending({ digit, index });
     lastAt.current = now;
     window.clearTimeout(timer.current);
@@ -77,11 +82,12 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
     }, 1000);
   };
 
+  const activeGroups = settings.keyboardLanguage === 'ar' ? AR_GROUPS : GROUPS;
   const keys = [
-    { n: '1', letters: '.,?!' }, { n: '2', letters: 'ABC' }, { n: '3', letters: 'DEF' },
-    { n: '4', letters: 'GHI' }, { n: '5', letters: 'JKL' }, { n: '6', letters: 'MNO' },
-    { n: '7', letters: 'PQRS' }, { n: '8', letters: 'TUV' }, { n: '9', letters: 'WXYZ' },
-    { n: '*', letters: '✳' }, { n: '0', letters: '+' }, { n: '#', letters: upperCase ? 'ABC' : 'abc' },
+    { n: '1', letters: activeGroups['1'] }, { n: '2', letters: activeGroups['2'] }, { n: '3', letters: activeGroups['3'] },
+    { n: '4', letters: activeGroups['4'] }, { n: '5', letters: activeGroups['5'] }, { n: '6', letters: activeGroups['6'] },
+    { n: '7', letters: activeGroups['7'] }, { n: '8', letters: activeGroups['8'] }, { n: '9', letters: activeGroups['9'] },
+    { n: '*', letters: '✳' }, { n: '0', letters: '+' }, { n: '#', letters: settings.keyboardLanguage === 'ar' ? 'عربي' : upperCase ? 'ABC' : 'abc' },
   ];
 
   return (
@@ -101,7 +107,7 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
       <div className="simpleKbSoftkeys">
         <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch('Backspace', 'Backspace'); }}>DELETE</button>
         <span>{pending ? `${pending.digit} · ${pending.index + 1}` : 'MULTI-TAP'}</span>
-        <button type="button" onClick={() => { setUpperCase((value) => !value); setPending(null); lastAt.current = 0; }}>ABC / abc</button>
+        <button type="button" onClick={() => { setUpperCase((value) => !value); setPending(null); lastAt.current = 0; }}>{settings.keyboardLanguage === 'ar' ? 'عربي' : 'ABC / abc'}</button>
       </div>
     </div>
   );
