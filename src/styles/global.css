@@ -1773,21 +1773,21 @@ html, body, #root { width:100%; min-width:0; min-height:100%; margin:0; }
   -webkit-user-select: none;
 }
 .gpActions {
-  flex: 0 0 clamp(42px, 7.5cqw, 54px);
-  width: min(100%, 360px);
+  flex: 0 0 clamp(24px, 5cqw, 32px);
+  width: min(100%, 260px);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(7px, 1.4cqw, 12px);
+  gap: clamp(4px, 1cqw, 8px);
 }
 .gpBtn.gpUtility {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  padding: 0 8px;
-  border-radius: 9px;
-  font-size: clamp(11px, 2.8cqw, 15px);
+  padding: 0 4px;
+  border-radius: 7px;
+  font-size: clamp(8px, 2cqw, 11px);
   line-height: 1;
-  letter-spacing: .045em;
+  letter-spacing: .025em;
   white-space: nowrap;
 }
 .gpBtn.gpGo {
@@ -1797,16 +1797,16 @@ html, body, #root { width:100%; min-width:0; min-height:100%; margin:0; }
 .gpControls {
   flex: 1 1 auto;
   min-height: 0;
-  width: min(100%, 180px);
-  max-height: 116px;
+  width: min(100%, 300px);
+  max-height: 190px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: 3px;
+  gap: clamp(4px, 1.2cqw, 8px);
 }
 .gpControls .gpDir {
-  font-size: clamp(17px, 5cqw, 27px);
-  border-radius: 8px;
+  font-size: clamp(24px, 7cqw, 40px);
+  border-radius: 11px;
 }
 .gpCenter {
   display: grid;
