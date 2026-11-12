@@ -729,7 +729,7 @@ function KeyboardSettings() {
       <Slider label="Screen height" value={current.screenShare} min={0.34} max={0.7} onChange={(v) => set('screenShare', v)} format={(v) => `${Math.round(v * 100)}%`} />
       <Slider label="Keyboard size" value={current.keyboardScale} min={0.75} max={1.3} onChange={(v) => set('keyboardScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
-        Classic mode uses the original 3×4 phone layout: 1–9, then *, 0 and #. Press the same number repeatedly to cycle letters (2=ABC, 3=DEF … 9=WXYZ). In the Phone dialler, keys enter digits; 0 enters a space and # changes letter case.
+        Classic mode uses the original phone keypad: nine letter-and-number keys (1–9), plus *, 0 and #. Press the same number repeatedly to cycle letters (2=ABC, 3=DEF … 9=WXYZ). In the Phone dialler, keys enter digits; 0 enters a space and # changes letter case.
       </div>
       <div className="tiny">The selected mode is saved on this device and is used on touch screens and desktop clicks.</div>
     </div>

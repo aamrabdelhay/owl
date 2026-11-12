@@ -40,7 +40,7 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
   const [trail, setTrail] = useState(0);
   const powerTimer = useRef<number | undefined>(undefined);
   const menuTimer = useRef<number | undefined>(undefined);
-  const padRef = useRef<HTMLDivElement>(null);
+  const padRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (settings.reduceMotion) return;
@@ -117,13 +117,13 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
     onKey({ key: dir, code: dir, dispatch: 'physical', shift: false, caps: false, ctrl: false, alt: false });
   };
 
-  const padPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  const padPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     e.currentTarget.setPointerCapture?.(e.pointerId);
     dragStart.current = { x: e.clientX, y: e.clientY, moved: false };
     lastMove.current = 0;
   };
 
-  const padPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const padPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!dragStart.current || e.buttons === 0) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
@@ -140,7 +140,7 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
     dragStart.current = { x: e.clientX, y: e.clientY, moved: true };
   };
 
-  const padPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const padPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
     const start = dragStart.current;
     dragStart.current = null;
     if (!start) return;
@@ -257,15 +257,15 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
 
             <div className="trackpadWrap">
               <div className="trackpadRing" aria-hidden="true" />
-              <div
+              <button
+                type="button"
                 ref={padRef}
                 className={`trackpad ${trail % 2 === 0 ? 'glow' : ''} ${pressed.includes('Enter') ? 'pressed' : ''}`}
-                role="button"
-                tabIndex={-1}
-                aria-label="Optical trackpad — drag to move, click to select"
+                aria-label="Select / OK — drag to navigate"
                 onPointerDown={padPointerDown}
                 onPointerMove={padPointerMove}
                 onPointerUp={padPointerUp}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clickFeedback(); onKey({ key: 'Enter', code: 'Enter', dispatch: 'physical', shift: false, caps: false, ctrl: false, alt: false }); } }}
                 onContextMenu={(e) => e.preventDefault()}
               />
             </div>

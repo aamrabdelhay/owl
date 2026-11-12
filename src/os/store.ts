@@ -81,7 +81,10 @@ export function loadSettingsSync(): Settings {
     // The setup takeover is intentionally removed; restore the handset
     // directly and keep home-screen hotkeys enabled for existing installs.
     // Password-free upgrade: preserve all local preferences and API keys, clear legacy lock credentials.
-    return deepMergeSettings(defaultSettings(), { ...parsed, onboarded: true, passwordHash: '', passwordSalt: '', passwordIsPin: false, autoLock: 0 });
+    const migrateClassicKeypad = localStorage.getItem('owl:classic-keypad-migrated:v1') !== '1';
+    const upgraded = deepMergeSettings(defaultSettings(), { ...parsed, keyboardMode: migrateClassicKeypad ? 'simple' : parsed.keyboardMode, onboarded: true, passwordHash: '', passwordSalt: '', passwordIsPin: false, autoLock: 0 });
+    if (migrateClassicKeypad) localStorage.setItem('owl:classic-keypad-migrated:v1', '1');
+    return upgraded;
   } catch {
     return defaultSettings();
   }

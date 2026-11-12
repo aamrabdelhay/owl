@@ -1663,3 +1663,53 @@ body { height: 100vh; height: 100dvh; }
 .drawerGrid .drawerCell { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 9px; min-height: 34px; padding: 4px 8px; border-radius: 5px; text-align: start; border-bottom: 1px solid var(--line); }
 .drawerGrid .drawerCell .appIcon, .drawerGrid .drawerCell > .appIcon { flex: 0 0 25px; width: 25px !important; height: 25px !important; }
 .drawerGrid .drawerCell > span:last-child { text-align: start; font-size: 10px; }
+
+
+/* OWL responsive handset layout — viewport first, no miniature centred device */
+html, body, #root { width:100%; min-width:0; min-height:100%; margin:0; }
+.desk {
+  position:fixed !important; inset:0 !important; width:100vw !important; height:100dvh !important;
+  min-width:0 !important; min-height:0 !important; padding:0 !important; margin:0 !important;
+  display:flex !important; align-items:stretch !important; justify-content:stretch !important; overflow:hidden !important;
+}
+.phoneStage, .phoneTilt {
+  width:100% !important; height:100% !important; min-width:0 !important; min-height:0 !important;
+  display:flex !important; align-items:stretch !important; justify-content:stretch !important;
+}
+.phone {
+  --pw:min(100vw, 520px);
+  width:min(100vw, 520px) !important; height:100dvh !important; max-height:100dvh !important;
+  min-width:0 !important; min-height:0 !important; margin:0 auto !important;
+  box-sizing:border-box !important; padding:max(3px,env(safe-area-inset-top)) 4px max(3px,env(safe-area-inset-bottom)) !important;
+  display:grid !important;
+  grid-template-rows:minmax(0,var(--screen-share,54%)) minmax(0,1fr) !important;
+  gap:0 !important; border-radius:clamp(0px,2.2vw,18px) !important; overflow:hidden !important;
+}
+.phoneDisplayArea { min-height:0 !important; height:auto !important; overflow:hidden !important; }
+.phoneInputArea { min-height:0 !important; height:auto !important; overflow:hidden !important; padding:3px 4px max(3px,env(safe-area-inset-bottom)) !important; }
+.phoneInputArea .navRow { flex:0 0 clamp(42px,9%,68px) !important; min-height:36px !important; }
+.phoneInputArea .trackpadWrap { width:clamp(42px,10vw,64px) !important; height:clamp(38px,9vw,58px) !important; flex:0 0 clamp(42px,10vw,64px) !important; }
+.phoneInputArea .trackpad { display:block !important; padding:0 !important; border:1px solid rgba(255,255,255,.16) !important; outline:none !important; appearance:none !important; -webkit-appearance:none !important; cursor:pointer !important; }
+.phoneInputArea .trackpad:focus-visible { outline:2px solid var(--hl) !important; outline-offset:2px !important; }
+.phoneInputArea .simpleKb {
+  flex:1 1 0 !important; min-height:0 !important; width:100% !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(4,minmax(0,1fr)) minmax(22px,auto) !important;
+  gap:clamp(3px,calc(5px * var(--keyboard-scale,1)),9px) !important;
+  padding:clamp(3px,calc(6px * var(--keyboard-scale,1)),9px) 2px 2px !important;
+}
+.phoneInputArea .simpleKey { min-width:0 !important; min-height:0 !important; width:100% !important; height:100% !important; }
+.phoneInputArea .simpleKey b { font-size:clamp(18px,calc(4.6vw * var(--keyboard-scale,1)),34px) !important; }
+.phoneInputArea .simpleKey span { font-size:clamp(9px,calc(2vw * var(--keyboard-scale,1)),14px) !important; letter-spacing:.1em !important; }
+.phoneInputArea .simpleKbSoftkeys { min-height:22px !important; font-size:clamp(8px,1.8vw,11px) !important; }
+.phoneInputArea .kb { flex:1 1 0 !important; min-height:0 !important; }
+.phoneInputArea .kbRow { min-height:0 !important; }
+@media (min-width:700px) and (pointer:fine) {
+  .desk { background:radial-gradient(ellipse at center,#1c2635,#080b11 72%) !important; }
+  .phone { box-shadow:0 20px 70px #000b !important; }
+}
+@media (max-height:650px) {
+  .phoneInputArea .navRow { flex-basis:34px !important; min-height:32px !important; }
+  .phoneInputArea .simpleKbSoftkeys { min-height:16px !important; }
+  .phoneInputArea .simpleKey b { font-size:clamp(14px,3.2vw,24px) !important; }
+}
