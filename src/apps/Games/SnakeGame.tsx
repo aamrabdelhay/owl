@@ -481,19 +481,13 @@ export default function SnakeGame() {
               Eat mice — every mouse adds a baby owlet behind you. Golden mice score 5× and speed you up.
               Avoid the walls and your own owlets.
             </div>
-            <div className="btnRow" style={{ justifyContent: 'center' }}>
-              <button className="btn primary" onClick={start}>Start (Enter)</button>
-            </div>
-            <div className="tiny">Arrows / WASD · Enter starts · Menu pauses</div>
+            <div className="tiny">Use the compact controls below the screen to start and steer</div>
           </Overlay>
         )}
         {paused && !gameOver && (
           <Overlay>
             <div style={{ fontSize: 12, fontWeight: 700 }}>Paused</div>
-            <div className="btnRow">
-              <button className="btn primary" onClick={pause}>Resume</button>
-              <button className="btn" onClick={() => reset(mode, 1, wrap)}>Restart</button>
-            </div>
+            <div className="tiny">Use RESUME or RESTART in the control strip below the screen</div>
           </Overlay>
         )}
         {gameOver && (
@@ -501,10 +495,7 @@ export default function SnakeGame() {
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, letterSpacing: '0.12em' }}>GAME OVER</div>
             <div style={{ fontSize: 12 }}>{status}</div>
             <div className="tiny">Score {score} · Owlets {Math.max(0, game.current.snake.length - 1)} · Best {Math.max(best, score)}</div>
-            <div className="btnRow" style={{ justifyContent: 'center' }}>
-              <button className="btn primary" onClick={() => reset(mode, 1, wrap)}>Play again</button>
-              <button className="btn" onClick={() => useStore.getState().openApp('games', { view: 'scores', game: 'snake' })}>Scores</button>
-            </div>
+            <div className="tiny">Use RESTART below the screen to play again</div>
           </Overlay>
         )}
       </div>
