@@ -93,39 +93,16 @@ export default function YouTubeApp() {
   const search = async (raw = query) => {
     const q = raw.trim();
     if (!q || loading) return;
-    if (!settings.youtubeApiKey) {
-      setError('Add a YouTube Data API v3 key in Settings → AI & online services, or paste a video link above.');
-      setTab('search');
-      return;
-    }
     setLoading(true);
     setError('');
     setSelected(null);
     setTab('search');
     saveSearchHistory([q, ...searchHistory.filter((item) => item.toLowerCase() !== q.toLowerCase())].slice(0, 30));
     try {
-      const url = new URL('https://www.googleapis.com/youtube/v3/search');
-      url.searchParams.set('part', 'snippet');
-      url.searchParams.set('type', 'video');
-      url.searchParams.set('videoEmbeddable', 'true');
-      url.searchParams.set('maxResults', '18');
-      url.searchParams.set('q', q);
-      const response = await fetch(url.toString(), { headers: { Accept: 'application/json', 'x-goog-api-key': settings.youtubeApiKey } });
+      const response = await fetch(`/api/youtube?q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error?.message || `YouTube search failed (${response.status})`);
-      const items: VideoItem[] = (data.items || []).flatMap((item: any) => {
-        const id = item?.id?.videoId;
-        const snippet = item?.snippet;
-        if (!id || !snippet) return [];
-        return [{
-          id,
-          title: String(snippet.title || 'Untitled video'),
-          channel: String(snippet.channelTitle || 'YouTube'),
-          description: String(snippet.description || ''),
-          thumbnail: String(snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || ''),
-          publishedAt: String(snippet.publishedAt || ''),
-        }];
-      });
+      if (!response.ok) throw new Error(data?.error || `YouTube search failed (${response.status})`);
+      const items: VideoItem[] = Array.isArray(data.items) ? data.items : [];
       setResults(items);
       if (!items.length) setError('No embeddable videos were found for that search.');
     } catch (err) {
@@ -164,7 +141,7 @@ export default function YouTubeApp() {
           <div className="tiny">{selected.channel}{selected.publishedAt ? ` · ${new Date(selected.publishedAt).toLocaleDateString()}` : ''}</div>
           <div className="tiny" style={{ maxHeight: 44, overflow: 'auto', lineHeight: 1.4 }}>{selected.description}</div>
           <div className="btnRow">
-            <button className="btn primary" onClick={() => window.open(`https://www.youtube.com/watch?v=${selected.id}`, '_blank', 'noopener,noreferrer')}>
+            <button className="btn primary" onClick={() => useStore.getState().openApp('web', { url: `https://www.youtube.com/watch?v=${selected.id}` })}>
               <Icon name="globe" size={10} /> Open on YouTube
             </button>
             <button className="btn" onClick={() => { setSelected(null); setTab('search'); }}>Back to results</button>
@@ -192,7 +169,7 @@ export default function YouTubeApp() {
                   <div style={{ flex: 1 }}><Field value={directUrl} onChange={setDirectUrl} placeholder="Paste YouTube link or video ID" onSubmit={playDirect} /></div>
                   <button className="btn" onClick={playDirect}>Play</button>
                 </div>
-                {!settings.youtubeApiKey && <div className="tiny">In-app search needs a YouTube Data API v3 key. Playback from a public video link does not need a key or sign-in.</div>}
+                <div className="tiny">Search and public playback work without a YouTube API key or account. Some videos may block embedded playback.</div>
                 {error && <div className="tiny" style={{ color: 'var(--red)' }}>{error}</div>}
               </div>
               <div className="appBody">

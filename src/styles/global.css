@@ -1409,7 +1409,7 @@ body { height: 100vh; height: 100dvh; }
   min-height: 0;
   position: relative;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, var(--screen-share, 54%)) minmax(0, 1fr);
   gap: 0;
   padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   border: 0;
@@ -1531,7 +1531,7 @@ body { height: 100vh; height: 100dvh; }
   height: auto;
   margin: 2px 0 0;
   padding: 5px 1px 2px;
-  gap: clamp(3px, .8dvh, 8px);
+  gap: clamp(2px, calc(.8dvh * var(--keyboard-scale, 1)), 10px);
   border-top: 1px solid rgba(255,255,255,.1);
   box-shadow: none;
 }
@@ -1549,7 +1549,7 @@ body { height: 100vh; height: 100dvh; }
   touch-action: manipulation;
 }
 .phoneInputArea .key .legend { gap: 2px; }
-.phoneInputArea .key .legend b { font-size: clamp(9px, 1.15vw, 16px); }
+.phoneInputArea .key .legend b { font-size: clamp(8px, calc(1.15vw * var(--keyboard-scale, 1)), 18px); }
 .phoneInputArea .key .legend s { font-size: clamp(6px, .65vw, 9px); }
 .phoneInputArea .key.small b, .phoneInputArea .key.small .arr { font-size: clamp(7px, .85vw, 12px); }
 .phoneInputArea .key.space .legend b { font-size: clamp(6px, .6vw, 9px); }
@@ -1566,7 +1566,8 @@ body { height: 100vh; height: 100dvh; }
   height: auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr)) auto;
   gap: clamp(5px, 1vw, 12px);
   padding: clamp(4px, 1vw, 10px) clamp(2px, 1vw, 10px) 2px;
   border-top: 1px solid rgba(255,255,255,.1);
@@ -1593,7 +1594,9 @@ body { height: 100vh; height: 100dvh; }
   background: linear-gradient(180deg, #66552b, #33270f);
   color: #ffe5a5;
 }
-.simpleKey b { font-family: var(--font-display); font-size: clamp(19px, 3.2vw, 36px); line-height: 1; }
+.simpleKey b { font-family: var(--font-display); font-size: clamp(16px, calc(3.2vw * var(--keyboard-scale, 1)), 36px); line-height: 1; }
+.simpleKbSoftkeys { grid-column: 1 / -1; min-height: clamp(22px, 3.5dvh, 32px); display: flex; justify-content: space-between; align-items: center; gap: 5px; font-size: clamp(6px, .65vw, 8px); color: #a9b7c9; }
+.simpleKbSoftkeys button { border: 0; background: transparent; color: #d7e1ef; font-size: inherit; font-weight: 700; padding: 3px 6px; }
 .simpleActions {
   grid-column: 1 / -1;
   min-height: clamp(26px, 4.2dvh, 38px);
@@ -1612,7 +1615,7 @@ body { height: 100vh; height: 100dvh; }
   letter-spacing: .06em;
   touch-action: manipulation;
 }
-.simpleKey span { font-size: clamp(7px, 1vw, 12px); letter-spacing: .16em; color: #b9c7d9; }
+.simpleKey span { font-size: clamp(7px, calc(1vw * var(--keyboard-scale, 1)), 12px); letter-spacing: .12em; color: #b9c7d9; }
 .simpleKbHint {
   grid-column: 1 / -1;
   text-align: center;
@@ -1654,3 +1657,9 @@ body { height: 100vh; height: 100dvh; }
   .phoneTilt { transition: none !important; }
   .phoneInputArea .key, .simpleKey { transition: none !important; }
 }
+
+/* Classic Series 40 style application list */
+.drawerGrid { grid-template-columns: 1fr !important; gap: 2px !important; }
+.drawerGrid .drawerCell { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 9px; min-height: 34px; padding: 4px 8px; border-radius: 5px; text-align: start; border-bottom: 1px solid var(--line); }
+.drawerGrid .drawerCell .appIcon, .drawerGrid .drawerCell > .appIcon { flex: 0 0 25px; width: 25px !important; height: 25px !important; }
+.drawerGrid .drawerCell > span:last-child { text-align: start; font-size: 10px; }

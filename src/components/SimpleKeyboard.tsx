@@ -81,6 +81,7 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
     { n: '1', letters: '.,?!' }, { n: '2', letters: 'ABC' }, { n: '3', letters: 'DEF' },
     { n: '4', letters: 'GHI' }, { n: '5', letters: 'JKL' }, { n: '6', letters: 'MNO' },
     { n: '7', letters: 'PQRS' }, { n: '8', letters: 'TUV' }, { n: '9', letters: 'WXYZ' },
+    { n: '*', letters: '✳' }, { n: '0', letters: '+' }, { n: '#', letters: upperCase ? 'ABC' : 'abc' },
   ];
 
   return (
@@ -97,11 +98,10 @@ export function SimpleKeyboard({ onKey }: { onKey: (event: KeyEventLike) => bool
           <span>{key.letters}</span>
         </button>
       ))}
-      <div className="simpleActions">
-        <button type="button" onClick={() => tap('0')} aria-label="Zero">0</button>
-        <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch(' ', 'Space'); }}>SPACE</button>
-        <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch('Backspace', 'Backspace'); }}>⌫</button>
-        <button type="button" onClick={() => { setUpperCase((value) => !value); setPending(null); lastAt.current = 0; }}> {upperCase ? 'ABC' : 'abc'} </button>
+      <div className="simpleKbSoftkeys">
+        <button type="button" onClick={() => { setPending(null); lastAt.current = 0; dispatch('Backspace', 'Backspace'); }}>DELETE</button>
+        <span>{pending ? `${pending.digit} · ${pending.index + 1}` : 'MULTI-TAP'}</span>
+        <button type="button" onClick={() => { setUpperCase((value) => !value); setPending(null); lastAt.current = 0; }}>ABC / abc</button>
       </div>
     </div>
   );

@@ -65,7 +65,7 @@ const LABELS: Record<string, string> = {
 function Root({ onOpen }: { onOpen: (s: Section) => void }) {
   const s = useStore((state) => state.settings);
   const rows: { id: Section; label: string; meta: string; icon: string }[] = [
-    { id: 'keyboard', label: 'Keyboard mode', meta: s.keyboardMode === 'simple' ? 'Classic 12-key' : 'BlackBerry QWERTY', icon: 'key' },
+    { id: 'keyboard', label: 'Keyboard & screen', meta: s.keyboardMode === 'simple' ? 'Classic 12-key' : 'BlackBerry QWERTY', icon: 'key' },
     { id: 'ai', label: 'AI & online services', meta: s.geminiApiKey ? 'Gemini configured' : 'Set up Gemini / YouTube', icon: 'wand' },
     { id: 'display', label: 'Display', meta: `Brightness ${Math.round(s.brightness * 100)}%`, icon: 'sun' },
     { id: 'sound', label: 'Sound', meta: `${profileLabel(s.profile, s.language)}`, icon: 'volume' },
@@ -133,8 +133,8 @@ function Display() {
   );
 }
 
-function Slider({ label, value, min, max, onChange, format }: {
-  label: string; value: number; min: number; max: number; onChange: (v: number) => void; format?: (v: number) => string;
+function Slider({ label, value, min, max, step, onChange, format }: {
+  label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void; format?: (v: number) => string;
 }) {
   return (
     <div>
@@ -143,7 +143,7 @@ function Slider({ label, value, min, max, onChange, format }: {
         <span className="tiny">{format ? format(value) : value}</span>
       </div>
       <input
-        type="range" min={min} max={max} step={0.01} value={value}
+        type="range" min={min} max={max} step={step ?? 0.01} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         style={{ width: '100%', accentColor: 'var(--hl)' }}
         inputMode="none"
@@ -427,92 +427,20 @@ function HomeSection() {
 /* -------------------------------- Security ------------------------------- */
 
 function Security() {
-  const s = useStore((st) => st.settings);
   const update = useStore((st) => st.updateSettings);
-  const toast = useStore((st) => st.toast);
-  const showDialog = useStore((st) => st.showDialog);
-  const lock = useStore((st) => st.lock);
-  const [oldPass, setOldPass] = useState('');
-  const [pass, setPass] = useState('');
-  const [pass2, setPass2] = useState('');
-  const [mode, setMode] = useState<'idle' | 'set' | 'change'>('idle');
-  const [error, setError] = useState('');
-
-  const savePassword = async () => {
-    if (mode === 'change') {
-      const ok = await verifyPassword(oldPass, s.passwordSalt, s.passwordHash);
-      if (!ok) { setError('Current password is wrong'); return; }
-    }
-    if (pass.length < 4) { setError('Use 4–12 characters'); return; }
-    if (pass.length > 12) { setError('Maximum 12 characters'); return; }
-    if (pass !== pass2) { setError('Passwords do not match'); return; }
-    const salt = randomSalt();
-    const hash = await hashPassword(pass, salt);
-    update({ passwordHash: hash, passwordSalt: salt, passwordIsPin: /^\d+$/.test(pass) });
-    setMode('idle');
-    setPass(''); setPass2(''); setOldPass(''); setError('');
-    successChime();
-    toast('Password saved (PBKDF2 hash)');
-  };
-
+  useEffect(() => {
+    update({ passwordHash: '', passwordSalt: '', passwordIsPin: false, autoLock: 0 });
+  }, [update]);
   return (
-    <div style={{ padding: 8, display: 'grid', gap: 7 }}>
-      <div className="card" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <Icon name="shield" size={18} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700 }}>{s.passwordHash ? 'Keyboard is locked on boot' : 'No password set'}</div>
-          <div className="tiny">{s.passwordHash ? `Stored as a salted PBKDF2 hash${s.passwordIsPin ? ' (PIN)' : ''}` : 'Press End to lock at any time'}</div>
+    <div style={{ padding: 8, display: 'grid', gap: 8 }}>
+      <div className="card" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <Icon name="unlock" size={20} />
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700 }}>No password or lock screen</div>
+          <div className="tiny">OWL opens directly. The simulator will not ask for a password after restart or inactivity.</div>
         </div>
       </div>
-
-      {(mode === 'set' || mode === 'change') ? (
-        <div style={{ display: 'grid', gap: 3 }}>
-          {mode === 'change' && (
-            <>
-              <div className="fieldLabel">Current password</div>
-              <Field value={oldPass} onChange={setOldPass} kind="password" placeholder="Current password" autoFocus maxLength={12} />
-            </>
-          )}
-          <div className="fieldLabel">New password or PIN (4–12)</div>
-          <Field value={pass} onChange={setPass} kind="password" placeholder="New password" autoFocus={mode === 'set'} maxLength={12} />
-          <Field value={pass2} onChange={setPass2} kind="password" placeholder="Repeat new password" maxLength={12} onSubmit={() => void savePassword()} />
-          {error && <div className="tiny" style={{ color: 'var(--red)' }}>{error}</div>}
-          <div className="btnRow">
-            <button className="btn" onClick={() => { setMode('idle'); setError(''); }}>Cancel</button>
-            <button className="btn primary" onClick={() => void savePassword()}>Save password</button>
-          </div>
-          <div className="tiny">5 wrong attempts trigger a 10-second cool-down. Forgot it? Reset OS (wipes data).</div>
-        </div>
-      ) : (
-        <div className="btnRow">
-          <button className="btn primary" onClick={() => setMode(s.passwordHash ? 'change' : 'set')}>
-            {s.passwordHash ? 'Change password' : 'Set password'}
-          </button>
-          {s.passwordHash && (
-            <button
-              className="btn danger"
-              onClick={() => showDialog({
-                title: 'Remove password?',
-                body: 'The lock screen will stop asking for a password.',
-                confirmLabel: 'Remove', danger: true,
-                onConfirm: () => { update({ passwordHash: '', passwordSalt: '', passwordIsPin: false }); toast('Password removed'); },
-              })}
-            >Remove password</button>
-          )}
-        </div>
-      )}
-
-      <div>
-        <div className="fieldLabel">Auto-lock</div>
-        <div className="btnRow">
-          {[30, 60, 120, 300, 0].map((v) => (
-            <button key={v} className={`chip ${s.autoLock === v ? 'on' : ''}`} onClick={() => update({ autoLock: v })}>
-              {v === 0 ? 'Never' : v < 60 ? `${v}s` : `${v / 60}m`}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button className="btn" onClick={lock}>Lock keyboard now</button>
+      <div className="tiny">This affects only the OWL simulator, not your phone or browser security.</div>
     </div>
   );
 }
@@ -781,7 +709,8 @@ function Help() {
 /* ------------------------- Keyboard mode & AI ---------------------------- */
 
 function KeyboardSettings() {
-  const mode = useStore((st) => st.settings.keyboardMode);
+  const current = useStore((st) => st.settings);
+  const mode = current.keyboardMode;
   const set = useStore((st) => st.setSetting);
   return (
     <div style={{ padding: 8, display: 'grid', gap: 8 }}>
@@ -796,10 +725,11 @@ function KeyboardSettings() {
         <span style={{ flex: 1 }}>BlackBerry QWERTY</span>
         <span className="meta">{mode === 'blackberry' ? 'Selected' : 'Full keyboard'}</span>
       </button>
+      <div className="fieldLabel">Screen / keyboard balance</div>
+      <Slider label="Screen height" value={current.screenShare} min={0.34} max={0.7} onChange={(v) => set('screenShare', v)} format={(v) => `${Math.round(v * 100)}%`} />
+      <Slider label="Keyboard size" value={current.keyboardScale} min={0.75} max={1.3} onChange={(v) => set('keyboardScale', v)} format={(v) => `${Math.round(v * 100)}%`} />
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
-        Classic mode uses multi-tap letters on the number keys (2=ABC, 3=DEF … 9=WXYZ).
-        Tap the same key again quickly to cycle letters. In the Phone dialler the same
-        keypad enters digits. BlackBerry mode keeps the full QWERTY layout.
+        Classic mode uses the original 3×4 phone layout: 1–9, then *, 0 and #. Press the same number repeatedly to cycle letters (2=ABC, 3=DEF … 9=WXYZ). In the Phone dialler, keys enter digits; 0 enters a space and # changes letter case.
       </div>
       <div className="tiny">The selected mode is saved on this device and is used on touch screens and desktop clicks.</div>
     </div>
@@ -811,9 +741,7 @@ function AISettings() {
   const update = useStore((st) => st.updateSettings);
   const toast = useStore((st) => st.toast);
   const [gemini, setGemini] = useState(settings.geminiApiKey || '');
-  const [youtube, setYoutube] = useState(settings.youtubeApiKey || '');
   useEffect(() => setGemini(settings.geminiApiKey || ''), [settings.geminiApiKey]);
-  useEffect(() => setYoutube(settings.youtubeApiKey || ''), [settings.youtubeApiKey]);
 
   return (
     <div style={{ padding: 8, display: 'grid', gap: 8 }}>
@@ -821,52 +749,27 @@ function AISettings() {
       <Field value={gemini} onChange={setGemini} kind="password" placeholder="Paste your Gemini API key" />
       <button className="btn" onClick={async () => {
         try {
-          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser. Use BlackBerry keyboard mode or paste into a supported field.');
+          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser.');
           const value = (await navigator.clipboard.readText()).trim();
           if (!value) throw new Error('Clipboard is empty.');
           setGemini(value);
-          toast('Gemini key pasted — press Save to keep it');
+          update({ geminiApiKey: value });
+          toast('Gemini key saved on this device');
         } catch (error) {
           toast(error instanceof Error ? error.message : 'Could not read clipboard');
         }
-      }}>Paste Gemini key from clipboard</button>
-      <button className="btn primary" onClick={() => { update({ geminiApiKey: gemini.trim() }); toast(gemini.trim() ? 'Gemini key saved on this device' : 'Gemini key removed'); }}>
-        Save Gemini key
-      </button>
+      }}>Paste and save Gemini key</button>
+      <button className="btn primary" onClick={() => { update({ geminiApiKey: gemini.trim() }); toast(gemini.trim() ? 'Gemini key saved on this device' : 'Gemini key removed'); }}>Save Gemini key</button>
       <button className={`chip ${settings.aiAutoReply ? 'on' : ''}`} onClick={() => update({ aiAutoReply: !settings.aiAutoReply })}>
         {settings.aiAutoReply ? '✓ AI SMS auto-replies enabled' : 'Enable AI SMS auto-replies'}
       </button>
       <button className={`chip ${settings.aiAutoAnswer ? 'on' : ''}`} onClick={() => update({ aiAutoAnswer: !settings.aiAutoAnswer })}>
         {settings.aiAutoAnswer ? '✓ Gemini auto-answers simulated calls' : 'Enable Gemini call auto-answer'}
       </button>
-      <div className="divider" />
-      <div className="fieldLabel">YouTube Data API key</div>
-      <Field value={youtube} onChange={setYoutube} kind="password" placeholder="Paste a YouTube Data API v3 key" />
-      <button className="btn" onClick={async () => {
-        try {
-          if (!navigator.clipboard?.readText) throw new Error('Clipboard paste is not available in this browser.');
-          const value = (await navigator.clipboard.readText()).trim();
-          if (!value) throw new Error('Clipboard is empty.');
-          setYoutube(value);
-          toast('YouTube key pasted — press Save to keep it');
-        } catch (error) {
-          toast(error instanceof Error ? error.message : 'Could not read clipboard');
-        }
-      }}>Paste YouTube key from clipboard</button>
-      <button className="btn" onClick={() => { update({ youtubeApiKey: youtube.trim() }); toast(youtube.trim() ? 'YouTube key saved on this device' : 'YouTube key removed'); }}>
-        Save YouTube key
-      </button>
       <div className="card tiny" style={{ lineHeight: 1.6 }}>
-        <b>Privacy & billing:</b> Keys are stored in this browser's local settings, not on an OWL server.
-        Requests go directly from this device to Google. Gemini receives the SMS text or conversation
-        prompt when AI is used. AI auto-replies and call auto-answer are opt-in. Protect your keys, restrict them in Google AI Studio / Cloud Console,
-        and review Google's own usage and billing limits.
+        The Gemini key is saved synchronously in this browser's local OWL settings. Normal app updates and service-worker cache refreshes do not clear it. It remains in this browser profile and origin; clearing browser site data or using another browser/device will remove or not share it. Gemini receives prompts when AI features are used.
       </div>
-      <div className="tiny">
-        YouTube search uses YouTube Data API v3 and needs its own Google Cloud key with the API enabled.
-        Public embeddable videos can play without signing in; some age-restricted or embedding-disabled
-        videos must open on YouTube instead.
-      </div>
+      <div className="tiny">YouTube search and public video playback do not need a YouTube API key or sign-in.</div>
     </div>
   );
 }

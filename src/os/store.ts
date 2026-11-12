@@ -12,7 +12,9 @@ const SETTINGS_KEY = 'owl:settings:v1';
 export function defaultSettings(now = Date.now()): Settings {
   return {
     language: 'en',
-    keyboardMode: 'blackberry',
+    keyboardMode: 'simple',
+    screenShare: 0.54,
+    keyboardScale: 1,
     geminiApiKey: '',
     youtubeApiKey: '',
     aiAutoReply: false,
@@ -57,7 +59,7 @@ export function defaultSettings(now = Date.now()): Settings {
     passwordHash: '',
     passwordSalt: '',
     passwordIsPin: false,
-    autoLock: 60,
+    autoLock: 0,
     powerSaver: false,
     bluetooth: true,
     wifiOnly: false,
@@ -78,7 +80,8 @@ export function loadSettingsSync(): Settings {
     const parsed = JSON.parse(raw) as Partial<Settings>;
     // The setup takeover is intentionally removed; restore the handset
     // directly and keep home-screen hotkeys enabled for existing installs.
-    return deepMergeSettings(defaultSettings(), { ...parsed, onboarded: true });
+    // Password-free upgrade: preserve all local preferences and API keys, clear legacy lock credentials.
+    return deepMergeSettings(defaultSettings(), { ...parsed, onboarded: true, passwordHash: '', passwordSalt: '', passwordIsPin: false, autoLock: 0 });
   } catch {
     return defaultSettings();
   }
@@ -88,11 +91,8 @@ let saveTimer: number | undefined;
 function persistSettings(settings: Settings) {
   if (typeof window === 'undefined') return;
   if (saveTimer) window.clearTimeout(saveTimer);
-  saveTimer = window.setTimeout(() => {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch { /* quota */ }
-  }, 180);
+  // Synchronous persistence avoids losing the Gemini key during a fast reload/update.
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* quota */ }
 }
 
 export interface AppStackEntry { appId: string; params?: Record<string, unknown> }
@@ -234,19 +234,10 @@ export const useStore = create<OwlStore>((set, get) => ({
     set({ powered: false, screen: 'off', drawerOpen: false, appId: null, appStack: [], softMenu: null, dialog: null });
   },
   powerOn: () => {
-    set({ powered: true, booting: true, bootProgress: 0, screen: 'boot', locked: true, appId: null, appStack: [] });
+    set({ powered: true, booting: true, bootProgress: 0, screen: 'boot', locked: false, appId: null, appStack: [] });
   },
-  lock: () => {
-    set({
-      locked: true,
-      screen: 'lock',
-      drawerOpen: false,
-      softMenu: null,
-      dialog: null,
-      recentOpen: false,
-      activeFieldId: null,
-    });
-  },
+  // Kept for compatibility with old key bindings; this simulator no longer locks.
+  lock: () => set({ locked: false, screen: get().appId ? 'app' : 'home' }),
   unlock: async (password) => {
     const { settings, failedAttempts, cooldownUntil } = get();
     if (Date.now() < cooldownUntil) return false;

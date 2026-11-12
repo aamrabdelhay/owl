@@ -71,11 +71,32 @@ function dailySeed(): number {
   return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 }
 
+function mazeName(level: number): string {
+  return MAZES[level - 1]?.name || `Challenge ${level}`;
+}
+
 function buildWalls(mode: Mode, level: number, wrap: boolean): Set<string> {
   const walls = new Set<string>();
   if (mode === 'maze') {
-    const maze = MAZES[Math.min(level - 1, MAZES.length - 1)];
-    maze.walls.forEach((run) => run.forEach(([x, y]) => walls.add(`${x},${y}`)));
+    const maze = MAZES[level - 1];
+    if (maze) {
+      maze.walls.forEach((run) => run.forEach(([x, y]) => walls.add(`${x},${y}`)));
+    } else {
+      // Later campaign stages are generated deterministically from the level.
+      const rand = seededRandom(dailySeed() + level * 7919);
+      const blocks = 5 + Math.min(8, Math.floor(level / 3));
+      for (let b = 0; b < blocks; b++) {
+        const horizontal = rand() > 0.5;
+        const len = 2 + Math.floor(rand() * 4);
+        const x = 2 + Math.floor(rand() * (COLS - 6));
+        const y = 2 + Math.floor(rand() * (ROWS - 5));
+        for (let i = 0; i < len; i++) {
+          const wx = horizontal ? x + i : x;
+          const wy = horizontal ? y : y + i;
+          if (wx > 1 && wx < COLS - 2 && wy > 1 && wy < ROWS - 2 && !(Math.abs(wx - 9) < 3 && Math.abs(wy - 7) < 2)) walls.add(`${wx},${wy}`);
+        }
+      }
+    }
   } else if (mode === 'daily') {
     const rand = seededRandom(dailySeed());
     const blocks = 4 + Math.floor(rand() * 3);
@@ -175,7 +196,7 @@ export default function SnakeGame() {
     setPaused(false);
     setRunning(false);
     setReady(true);
-    setStatus(nextMode === 'maze' ? `${MAZES[Math.min(nextLevel - 1, MAZES.length - 1)].name} · eat 6 mice` : nextMode === 'daily' ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}` : 'Classic');
+    setStatus(nextMode === 'maze' ? `${mazeName(nextLevel)} · eat 6 mice` : nextMode === 'daily' ? `Daily maze · ${formatDate(settings.language, new Date(), { month: 'short', day: 'numeric' })}` : 'Classic');
     spawnMouse();
   }, [mode, wrap, speed, spawnMouse, settings.language]);
 
@@ -242,7 +263,7 @@ export default function SnakeGame() {
       setMiceEaten(g.miceEaten);
       spawnMouse();
       if (mode === 'maze' && g.miceEaten >= 6) {
-        if (g.level >= MAZES.length) {
+        if (g.level >= 30) {
           sfx('win');
           die('Campaign complete!');
           return;
@@ -253,8 +274,8 @@ export default function SnakeGame() {
         g.miceEaten = 0;
         setLevel(nextLevel);
         setMiceEaten(0);
-        setStatus(`${MAZES[nextLevel - 1].name} · eat 6 mice`);
-        toast(`Level ${nextLevel}: ${MAZES[nextLevel - 1].name}`);
+        setStatus(`${mazeName(nextLevel)} · eat 6 mice`);
+        toast(`Level ${nextLevel}: ${mazeName(nextLevel)}`);
         spawnMouse();
       }
     }

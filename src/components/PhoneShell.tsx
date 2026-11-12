@@ -159,7 +159,7 @@ export function PhoneShell({ children, onKey, screenRef, scale, screenWidth }: P
         className="phoneTilt"
         style={{ transform: 'none' }}
       >
-        <div className={`phone ${screen === 'boot' ? 'booting' : ''}`} data-trail={trail} role="application" aria-label="OWL phone simulator">
+        <div className={`phone ${screen === 'boot' ? 'booting' : ''}`} data-trail={trail} role="application" aria-label="OWL phone simulator" style={{ '--screen-share': `${Math.max(0.34, Math.min(0.7, settings.screenShare || 0.54)) * 100}%`, '--keyboard-scale': settings.keyboardScale || 1 } as React.CSSProperties}>
           {/* side keys */}
           <button
             type="button"

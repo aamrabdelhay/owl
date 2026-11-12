@@ -188,6 +188,11 @@ export const APPS: AppMeta[] = [
     category: 'games', hotkey: '', dock: false,
     load: () => import('../apps/Games/SolitaireGame'),
   },
+  {
+    id: 'chess', name: n('Chess', 'الشطرنج'), icon: 'game', color: '#b58a48',
+    category: 'games', hotkey: '', dock: false,
+    load: () => import('../apps/Games/ChessGame'),
+  },
 
   /* -------------------------------- System -------------------------------- */
   {

@@ -270,7 +270,7 @@ export default function BreakerGame() {
 
         // level cleared?
         if (s.bricks.every((b) => !b.alive)) {
-          if (s.level >= 6) {
+          if (s.level >= 50) {
             setWon(true);
             setRunning(false);
             submit(s.score + 200);
