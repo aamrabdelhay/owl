@@ -289,7 +289,7 @@ export default function SnakeGame() {
         }
       }
     }
-  }, [mode, wrap, die, sfx, spawnMouse, toast]);
+  }, [mode, wrap, speed, die, sfx, spawnMouse, toast]);
 
   /* --------------------------- render + game loop --------------------------- */
   useEffect(() => {
